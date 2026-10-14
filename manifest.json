@@ -22,10 +22,7 @@
         "https://*.instagram.com/*",
         "https://*.youtube.com/*",
         "https://*.facebook.com/*",
-        "https://*.tiktok.com/*",
-        "http://localhost/*",
-        "http://127.0.0.1/*",
-        "file:///*"
+        "https://*.tiktok.com/*"
       ],
       "js": ["dist/content.bundle.js"],
       "css": ["src/content/overlay.css"],
@@ -38,7 +35,12 @@
         "src/content/overlay.css",
         "icons/*"
       ],
-      "matches": ["<all_urls>"]
+      "matches": [
+        "https://*.instagram.com/*",
+        "https://*.youtube.com/*",
+        "https://*.facebook.com/*",
+        "https://*.tiktok.com/*"
+      ]
     }
   ],
   "action": {
