@@ -28,13 +28,14 @@ const bgBundleContent = `/**
 
 // --- CONFIGURATION ---
 const DEFAULT_CONFIG = {
-  reelLimit: 5,
-  timeLimitMinutes: 10,
+  reelLimit: 10,
+  timeLimitMinutes: 15,
   cooldownMinutes: 30,
-  challengeType: 'random', // 'math', 'sequence', 'stroop', 'logic', 'matrix', 'random'
+  challengeType: 'random', // 'math', 'sequence', 'stroop', 'logic', 'matrix', 'iba_bcs', 'game_logic', 'random'
   difficulty: 'insane',    // 'easy', 'medium', 'hard', 'insane'
   soundEnabled: true,
-  maxFailedAttempts: 3
+  maxFailedAttempts: 3,
+  ageMode: 'all_ages'
 };
 
 const STORAGE_KEYS = {
@@ -46,7 +47,7 @@ const STORAGE_KEYS = {
 };
 
 // --- CHALLENGE ENGINE ---
-const CHALLENGE_TYPES = ['math', 'sequence', 'stroop', 'logic', 'matrix'];
+const CHALLENGE_TYPES = ['math', 'sequence', 'stroop', 'logic', 'matrix', 'iba_bcs', 'game_logic'];
 
 const STROOP_COLORS = [
   { name: 'Red', hex: '#ef4444' },
@@ -475,6 +476,347 @@ function generateStroopChallenge(difficulty = 'hard') {
   };
 }
 
+function generateIbaBcsChallenge(difficulty = 'insane') {
+  const id = 'ibabcs_' + Date.now() + '_' + getRandomInt(100, 999);
+  const category = getRandomInt(1, 6);
+
+  if (category === 1) {
+    const pairs = [
+      { a: 10, b: 15, ans: 6 },
+      { a: 12, b: 24, ans: 8 },
+      { a: 20, b: 30, ans: 12 },
+      { a: 15, b: 30, ans: 10 },
+      { a: 12, b: 6, ans: 4 }
+    ];
+    const item = pairs[getRandomInt(0, pairs.length - 1)];
+    const question = 'Worker A can finish a project in ' + item.a + ' days, and Worker B finishes the same project in ' + item.b + ' days. Working together, in how many days will they complete the project?';
+    const answer = String(item.ans);
+    const explanation = "Worker A's 1-day rate = 1/" + item.a + ". Worker B's 1-day rate = 1/" + item.b + ". Combined rate = 1/" + item.a + " + 1/" + item.b + " = (" + item.b + " + " + item.a + ") / (" + (item.a * item.b) + ") = 1/" + item.ans + ". Therefore, together they take " + item.ans + " days.";
+    const offsets = shuffle([-3, -2, -1, 1, 2, 4]);
+    const options = shuffle([
+      answer,
+      String(item.ans + offsets[0]),
+      String(item.ans + offsets[1]),
+      String(item.ans + offsets[2])
+    ]);
+
+    return {
+      id,
+      type: 'iba_bcs',
+      subCategory: 'time_and_work',
+      difficulty,
+      title: '🏛️ IBA / BCS Standard: Time & Work',
+      instruction: 'Solve this competitive entrance arithmetic problem:',
+      question,
+      answer,
+      options,
+      hint: "Calculate each worker's 1-day fraction of work, add them, and invert.",
+      explanation,
+      inputType: 'choice'
+    };
+  } else if (category === 2) {
+    const items = [
+      {
+        q: 'An item is marked up by 25% and then discounted by 20%. What is the net percentage profit or loss?',
+        ans: '0% (Break-even)',
+        expl: 'Formula: Net change = [a + b + (a×b)/100]%. Here a = +25, b = -20. Net = 25 - 20 - (25×20)/100 = 5 - 5 = 0%. The retailer breaks even.',
+        opts: ['0% (Break-even)', '+5% profit', '-5% loss', '+4% profit']
+      },
+      {
+        q: "A software engineer's salary increases by 20% in year one, but is reduced by 10% in year two. What is the net percentage change from original?",
+        ans: '+8% increase',
+        expl: 'Let original salary = 100. After +20%, salary = 120. After -10% of 120, reduction = 12. Final salary = 120 - 12 = 108. Net change = +8% increase.',
+        opts: ['+8% increase', '+10% increase', '+5% increase', '-2% decrease']
+      },
+      {
+        q: 'A stock price surges by 50% on Monday, but crashes by 50% on Tuesday. What is the overall percentage change?',
+        ans: '-25% decrease',
+        expl: 'Formula: Let initial value = 100. Monday = 150. Tuesday (-50% of 150) = 75. Overall change = 75 - 100 = -25% (a net 25% loss). Intuitive 0% is an autopilot trap.',
+        opts: ['-25% decrease', '0% (Unchanged)', '-15% decrease', '-50% decrease']
+      },
+      {
+        q: 'The length of a rectangle increases by 30% and width decreases by 20%. By what percentage does the area change?',
+        ans: '+4% increase',
+        expl: 'Area change = a + b + (ab/100) = 30 - 20 - (30×20)/100 = 10 - 6 = +4% increase.',
+        opts: ['+4% increase', '+10% increase', '-4% decrease', '+6% increase']
+      }
+    ];
+    const item = items[getRandomInt(0, items.length - 1)];
+
+    return {
+      id,
+      type: 'iba_bcs',
+      subCategory: 'successive_percentages',
+      difficulty,
+      title: '📊 IBA / BCS Standard: Percentage & Profit-Loss',
+      instruction: 'Calculate the cumulative rate of change without falling into cognitive traps:',
+      question: item.q,
+      answer: item.ans,
+      options: shuffle(item.opts),
+      hint: 'Apply successive percentage rule: a + b + (ab/100).',
+      explanation: item.expl,
+      inputType: 'choice'
+    };
+  } else if (category === 3) {
+    const items = [
+      {
+        q: 'A train 120 meters long passes an electric telegraph post in 6 seconds. What is the speed of the train in km/h?',
+        ans: '72 km/h',
+        expl: 'Speed in m/s = Distance / Time = 120m / 6s = 20 m/s. To convert to km/h, multiply by 18/5: 20 × (18/5) = 72 km/h.',
+        opts: ['72 km/h', '60 km/h', '54 km/h', '80 km/h']
+      },
+      {
+        q: 'Two trains 100m and 150m long are moving towards each other on parallel tracks at 40 km/h and 50 km/h. How many seconds will they take to completely pass each other?',
+        ans: '10 seconds',
+        expl: 'Total distance = 100m + 150m = 250m. Relative speed = 40 + 50 = 90 km/h. Convert to m/s: 90 × (5/18) = 25 m/s. Time = 250m / 25 m/s = 10 seconds.',
+        opts: ['10 seconds', '12 seconds', '8 seconds', '15 seconds']
+      },
+      {
+        q: 'A train 150 meters long is traveling at 54 km/h. How many seconds will it take to cross a bridge 300 meters long?',
+        ans: '30 seconds',
+        expl: 'Total distance to clear = Train length + Bridge length = 150m + 300m = 450m. Speed = 54 km/h = 54 × (5/18) = 15 m/s. Time = 450m / 15 m/s = 30 seconds.',
+        opts: ['30 seconds', '25 seconds', '35 seconds', '20 seconds']
+      }
+    ];
+    const item = items[getRandomInt(0, items.length - 1)];
+
+    return {
+      id,
+      type: 'iba_bcs',
+      subCategory: 'relative_speed',
+      difficulty,
+      title: '🚆 IBA / BCS Standard: Relative Speed & Distance',
+      instruction: 'Determine the velocity / crossing time using relative motion formulas:',
+      question: item.q,
+      answer: item.ans,
+      options: shuffle(item.opts),
+      hint: 'Total distance is the sum of lengths. Convert km/h to m/s by multiplying with 5/18.',
+      explanation: item.expl,
+      inputType: 'choice'
+    };
+  } else if (category === 4) {
+    const items = [
+      {
+        q: 'In a 60-liter mixture of milk and water, the ratio of milk to water is 2:1. How many liters of water must be added to make the ratio 1:2?',
+        ans: '60 liters',
+        expl: 'Initial amounts: Total = 60L. Ratio 2:1 => Milk = 40L, Water = 20L. In the new ratio 1:2, Milk is 1 part (40L), so Water must be 2 parts = 80L. Water to add = 80L - 20L = 60 liters.',
+        opts: ['60 liters', '40 liters', '30 liters', '50 liters']
+      },
+      {
+        q: 'In a 45-liter container of acid and water, the ratio is 2:1. How many liters of water must be added so that the ratio of acid to water becomes 1:1?',
+        ans: '15 liters',
+        expl: 'Total = 45L. Acid = (2/3)×45 = 30L, Water = 15L. To make the ratio 1:1, Water must equal Acid (30L). Water added = 30L - 15L = 15 liters.',
+        opts: ['15 liters', '20 liters', '10 liters', '25 liters']
+      }
+    ];
+    const item = items[getRandomInt(0, items.length - 1)];
+
+    return {
+      id,
+      type: 'iba_bcs',
+      subCategory: 'mixture_ratio',
+      difficulty,
+      title: '🧪 IBA / BCS Standard: Mixtures & Ratio',
+      instruction: 'Compute the exact volume required for ratio equilibration:',
+      question: item.q,
+      answer: item.ans,
+      options: shuffle(item.opts),
+      hint: 'Find the invariant component (the one not being added), and calculate target proportion.',
+      explanation: item.expl,
+      inputType: 'choice'
+    };
+  } else if (category === 5) {
+    const items = [
+      {
+        q: 'Pointing to a portrait of a gentleman, a lady says: "His mother is the only daughter of my mother." How is the lady related to the gentleman in the portrait?',
+        ans: 'Mother',
+        expl: '"The only daughter of my mother" means the lady herself. Thus, his mother is the lady herself. The lady is his Mother.',
+        opts: ['Mother', 'Aunt', 'Sister', 'Grandmother']
+      },
+      {
+        q: 'A is the brother of B. B is the daughter of C. D is the father of C. How is A related to D?',
+        ans: 'Grandson',
+        expl: 'B is daughter of C, and A is brother of B, so A is the son of C. Since D is the father of C, A is the Grandson of D.',
+        opts: ['Grandson', 'Son', 'Brother', 'Nephew']
+      },
+      {
+        q: 'A man says: "The father of the boy playing chess is the only son of my father." How is the man related to the boy?',
+        ans: 'Father',
+        expl: '"The only son of my father" refers to the speaker himself. Therefore, the father of the boy is the speaker himself. He is the Father.',
+        opts: ['Father', 'Uncle', 'Brother', 'Grandfather']
+      }
+    ];
+    const item = items[getRandomInt(0, items.length - 1)];
+
+    return {
+      id,
+      type: 'iba_bcs',
+      subCategory: 'mental_ability_relations',
+      difficulty,
+      title: '👥 BCS Mental Ability: Blood Relations',
+      instruction: 'Trace the genealogical chain to identify the relationship:',
+      question: item.q,
+      answer: item.ans,
+      options: shuffle(item.opts),
+      hint: "Break down statements from the perspective of the speaker ('my mother\\'s only daughter').",
+      explanation: item.expl,
+      inputType: 'choice'
+    };
+  } else {
+    const subType = getRandomInt(1, 2);
+    if (subType === 1) {
+      const triples = [
+        { north: 9, east: 12, ans: 15 },
+        { north: 6, east: 8, ans: 10 },
+        { north: 5, east: 12, ans: 13 },
+        { north: 8, east: 15, ans: 17 }
+      ];
+      const item = triples[getRandomInt(0, triples.length - 1)];
+      const question = 'A candidate walks ' + item.north + ' km North, then turns 90° right and walks ' + item.east + ' km East. What is the shortest direct straight-line distance from the starting point?';
+      const answer = item.ans + ' km';
+      const explanation = 'North and East form a perpendicular 90° right triangle. By the Pythagorean theorem: Distance = √(' + item.north + '² + ' + item.east + '²) = √(' + (item.north * item.north) + ' + ' + (item.east * item.east) + ') = √' + (item.ans * item.ans) + ' = ' + item.ans + ' km.';
+      const offsets = shuffle([-3, -1, 2, 4]);
+      const options = shuffle([
+        answer,
+        (item.ans + offsets[0]) + ' km',
+        (item.ans + offsets[1]) + ' km',
+        (item.ans + offsets[2]) + ' km'
+      ]);
+
+      return {
+        id,
+        type: 'iba_bcs',
+        subCategory: 'direction_pythagoras',
+        difficulty,
+        title: '🧭 BCS Mental Ability: Direction & Displacement',
+        instruction: 'Calculate the minimum Euclidean displacement from the origin:',
+        question,
+        answer,
+        options,
+        hint: 'Use the Pythagorean theorem: a² + b² = c².',
+        explanation,
+        inputType: 'choice'
+      };
+    } else {
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const startIdx = getRandomInt(0, 6);
+      const startDay = days[startIdx];
+      const daysAhead = getRandomInt(45, 95);
+      const targetIdx = (startIdx + daysAhead) % 7;
+      const answer = days[targetIdx];
+      const question = 'If today is ' + startDay + ', what day of the week will it be exactly ' + daysAhead + ' days from today?';
+      const remainder = daysAhead % 7;
+      const explanation = 'Each 7 days brings back the exact same day of the week. ' + daysAhead + ' ÷ 7 = ' + Math.floor(daysAhead / 7) + ' cycles with a remainder of ' + remainder + '. Counting ' + remainder + ' days forward from ' + startDay + ' lands on ' + answer + '.';
+      const otherDays = days.filter(d => d !== answer);
+      const options = shuffle([answer, otherDays[0], otherDays[1], otherDays[2]]);
+
+      return {
+        id,
+        type: 'iba_bcs',
+        subCategory: 'calendar_modular',
+        difficulty,
+        title: '📅 BCS Mental Ability: Calendar Mathematics',
+        instruction: 'Compute the modular weekday offset:',
+        question,
+        answer,
+        options,
+        hint: 'Divide the number of days by 7 and find the remainder.',
+        explanation,
+        inputType: 'choice'
+      };
+    }
+  }
+}
+
+function generateGameLogicChallenge(difficulty = 'insane') {
+  const id = 'game_' + Date.now() + '_' + getRandomInt(100, 999);
+  const template = getRandomInt(1, 3);
+
+  if (template === 1) {
+    const a = getRandomInt(4, 7);
+    const b = getRandomInt(3, 6);
+    const answer = String(a * a + b * b);
+    const question = 'Decipher the hidden operator rule:\\nIf 3 ⨁ 4 = 25\\nAnd 5 ⨁ 2 = 29\\nWhat is ' + a + ' ⨁ ' + b + ' = ?';
+    const explanation = 'The operator ⨁ calculates the sum of squares: x ⨁ y = x² + y². For 3 ⨁ 4: 3² + 4² = 9 + 16 = 25. For ' + a + ' ⨁ ' + b + ': ' + a + '² + ' + b + '² = ' + (a * a) + ' + ' + (b * b) + ' = ' + answer + '.';
+    const offsets = shuffle([-6, -4, 4, 8]);
+    const options = shuffle([
+      answer,
+      String(a * a + b * b + offsets[0]),
+      String(a * a + b * b + offsets[1]),
+      String(a * a + b * b + offsets[2])
+    ]);
+
+    return {
+      id,
+      type: 'game_logic',
+      subCategory: 'operator_cipher',
+      difficulty,
+      title: '🎮 Brain Game: Operator Decryption',
+      instruction: 'Find the secret mathematical function represented by ⨁:',
+      question,
+      answer,
+      options,
+      hint: 'Look at squares or multiplication relationships.',
+      explanation,
+      inputType: 'choice'
+    };
+  } else if (template === 2) {
+    const a = getRandomInt(5, 9);
+    const b = getRandomInt(2, 4);
+    const c = getRandomInt(3, 5);
+    const target = (a - b) * c;
+    const question = 'Which arithmetic sign (+, -, ×, ÷) must replace ❓ to make the equation true?\\n(' + a + ' ❓ ' + b + ') × ' + c + ' = ' + target;
+    const answer = '-';
+    const explanation = "Substitute '-': (" + a + " - " + b + ") × " + c + " = " + (a - b) + " × " + c + " = " + target + ". Therefore, ❓ must be the minus sign (-).";
+    const options = ['-', '+', '×', '÷'];
+
+    return {
+      id,
+      type: 'game_logic',
+      subCategory: 'operator_game',
+      difficulty,
+      title: '🎯 Brain Game: Arithmetic Operator Match',
+      instruction: 'Select the missing mathematical operator that balances the equation:',
+      question,
+      answer,
+      options,
+      hint: 'Divide both sides by ' + c + ' first to see what (' + a + ' ❓ ' + b + ') must equal.',
+      explanation,
+      inputType: 'choice'
+    };
+  } else {
+    const words = [
+      { plain: 'FOCUS', coded: 'GPFVT', target: 'BRAIN', targetCoded: 'CSBJO', rule: '+1' },
+      { plain: 'LOGIC', coded: 'MPHJD', target: 'SMART', targetCoded: 'TNBSU', rule: '+1' },
+      { plain: 'MIND', coded: 'OJPE', target: 'GOAL', targetCoded: 'IQCN', rule: '+2' }
+    ];
+    const item = words[getRandomInt(0, words.length - 1)];
+    const question = 'In a cognitive cryptography game:\\n' + item.plain + ' is encrypted as "' + item.coded + '".\\nUsing the exact same cipher algorithm, how is "' + item.target + '" encrypted?';
+    const answer = item.targetCoded;
+    const explanation = 'Each letter is shifted forward by ' + item.rule + ' position(s) in the alphabet. Result = ' + answer + '.';
+    
+    const d1 = item.target.split('').map(c => String.fromCharCode(c.charCodeAt(0) + (item.rule === '+1' ? 2 : 1))).join('');
+    const d2 = item.target.split('').reverse().join('');
+    const d3 = item.targetCoded.slice(1) + item.targetCoded[0];
+    const options = shuffle([answer, d1, d2, d3]);
+
+    return {
+      id,
+      type: 'game_logic',
+      subCategory: 'cipher_game',
+      difficulty,
+      title: '🔐 Brain Game: Alphabetic Cryptography',
+      instruction: 'Crack the cipher shift rule and encode the target keyword:',
+      question,
+      answer,
+      options,
+      hint: 'Compare the position of each corresponding letter in the English alphabet.',
+      explanation,
+      inputType: 'choice'
+    };
+  }
+}
+
 function generateChallenge(type = 'random', difficulty = 'insane') {
   let chosenType = type;
   if (chosenType === 'random' || !CHALLENGE_TYPES.includes(chosenType)) {
@@ -492,6 +834,10 @@ function generateChallenge(type = 'random', difficulty = 'insane') {
       return generateSequenceChallenge(difficulty);
     case 'stroop':
       return generateStroopChallenge(difficulty);
+    case 'iba_bcs':
+      return generateIbaBcsChallenge(difficulty);
+    case 'game_logic':
+      return generateGameLogicChallenge(difficulty);
     default:
       return generateLogicChallenge(difficulty);
   }
@@ -612,6 +958,41 @@ class StateManager {
       }
     }
     return { isCooldown: false, remainingSeconds: 0 };
+  }
+
+  async checkSessionStatus() {
+    const cooldown = await this.checkCooldownStatus();
+    if (cooldown.isCooldown) {
+      return {
+        isBlocked: true,
+        isCooldown: true,
+        remainingSeconds: cooldown.remainingSeconds,
+        reelCount: this.state.reelCount
+      };
+    }
+
+    const elapsedMinutes = (Date.now() - this.state.sessionStartTime) / (1000 * 60);
+    const hitReelLimit = this.state.reelCount >= this.config.reelLimit;
+    const hitTimeLimit = elapsedMinutes >= this.config.timeLimitMinutes;
+
+    if (hitReelLimit || hitTimeLimit) {
+      this.state.isBlocked = true;
+      await this._persistState();
+      return {
+        isBlocked: true,
+        isCooldown: false,
+        reason: hitReelLimit ? 'reel_limit' : 'time_limit',
+        reelCount: this.state.reelCount,
+        elapsedMinutes: Math.floor(elapsedMinutes)
+      };
+    }
+
+    return {
+      isBlocked: false,
+      isCooldown: false,
+      reelCount: this.state.reelCount,
+      elapsedMinutes: Math.floor(elapsedMinutes)
+    };
   }
 
   async recordReelView() {
@@ -792,7 +1173,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           });
         }
 
-        if (state.isBlocked) {
+        // Check dual limit threshold (Reels count >= 10 OR Elapsed time >= 15 min)
+        const sessionStatus = await stateManager.checkSessionStatus();
+        if (sessionStatus.isBlocked) {
           let challenge = await getStoredChallenge();
           if (!challenge) {
             challenge = generateChallenge(config.challengeType, config.difficulty);
@@ -805,7 +1188,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             challenge,
             failedAttempts: state.failedAttempts,
             maxAttempts: config.maxFailedAttempts,
-            reelCount: state.reelCount,
+            reelCount: sessionStatus.reelCount,
+            elapsedMinutes: sessionStatus.elapsedMinutes,
+            reason: sessionStatus.reason,
             config
           });
         }
@@ -814,7 +1199,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return sendResponse({
           isBlocked: false,
           isCooldown: false,
-          reelCount: state.reelCount,
+          reelCount: sessionStatus.reelCount,
+          elapsedMinutes: sessionStatus.elapsedMinutes,
           config
         });
       }
@@ -1876,6 +2262,12 @@ const contentBundleContent = `/**
   setInterval(() => {
     checkUrlChange();
   }, 400);
+
+  // Periodic time threshold ticker: ensures 15-minute time limit blocks the feed
+  // even if user stays on a single reel without scrolling or URL change.
+  setInterval(() => {
+    checkCurrentStatus();
+  }, 5000);
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {

@@ -126,6 +126,46 @@ export class StateManager {
   }
 
   /**
+   * Check current session status against dual limits:
+   * 1. Reel count limit (e.g., 10 reels)
+   * 2. Active session elapsed time limit (e.g., 15 minutes)
+   */
+  async checkSessionStatus() {
+    const cooldown = await this.checkCooldownStatus();
+    if (cooldown.isCooldown) {
+      return {
+        isBlocked: true,
+        isCooldown: true,
+        remainingSeconds: cooldown.remainingSeconds,
+        reelCount: this.state.reelCount
+      };
+    }
+
+    const elapsedMinutes = (Date.now() - this.state.sessionStartTime) / (1000 * 60);
+    const hitReelLimit = this.state.reelCount >= this.config.reelLimit;
+    const hitTimeLimit = elapsedMinutes >= this.config.timeLimitMinutes;
+
+    if (hitReelLimit || hitTimeLimit) {
+      this.state.isBlocked = true;
+      await this._persistState();
+      return {
+        isBlocked: true,
+        isCooldown: false,
+        reason: hitReelLimit ? 'reel_limit' : 'time_limit',
+        reelCount: this.state.reelCount,
+        elapsedMinutes: Math.floor(elapsedMinutes)
+      };
+    }
+
+    return {
+      isBlocked: false,
+      isCooldown: false,
+      reelCount: this.state.reelCount,
+      elapsedMinutes: Math.floor(elapsedMinutes)
+    };
+  }
+
+  /**
    * Record a reel being viewed
    */
   async recordReelView() {

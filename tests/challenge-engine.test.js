@@ -10,6 +10,8 @@ describe('Challenge Engine', () => {
     assert.ok(CHALLENGE_TYPES.includes('stroop'));
     assert.ok(CHALLENGE_TYPES.includes('logic'));
     assert.ok(CHALLENGE_TYPES.includes('matrix'));
+    assert.ok(CHALLENGE_TYPES.includes('iba_bcs'));
+    assert.ok(CHALLENGE_TYPES.includes('game_logic'));
   });
 
   describe('Math Challenges (Insane / Multi-Step)', () => {
@@ -96,8 +98,41 @@ describe('Challenge Engine', () => {
     });
   });
 
+  describe('IBA & BCS Competitive Entrance Challenges', () => {
+    it('should generate IBA and BCS arithmetic and mental ability questions with explanations', () => {
+      for (let i = 0; i < 5; i++) {
+        const challenge = generateChallenge('iba_bcs', 'insane');
+        assert.equal(challenge.type, 'iba_bcs');
+        assert.ok(challenge.question);
+        assert.ok(challenge.answer);
+        assert.ok(Array.isArray(challenge.options));
+        assert.ok(challenge.options.includes(challenge.answer));
+        assert.ok(challenge.explanation);
+        assert.ok(challenge.explanation.length > 15);
+        assert.equal(verifyAnswer(challenge, challenge.answer), true);
+        assert.equal(verifyAnswer(challenge, 'random_wrong_xyz'), false);
+      }
+    });
+  });
+
+  describe('Game Logic & Symbolic Cipher Challenges', () => {
+    it('should generate operator decryption, missing operand, and cryptography games', () => {
+      for (let i = 0; i < 5; i++) {
+        const game = generateChallenge('game_logic', 'insane');
+        assert.equal(game.type, 'game_logic');
+        assert.ok(game.question);
+        assert.ok(game.answer);
+        assert.ok(Array.isArray(game.options));
+        assert.ok(game.options.includes(game.answer));
+        assert.ok(game.explanation);
+        assert.equal(verifyAnswer(game, game.answer), true);
+        assert.equal(verifyAnswer(game, 'wrong_cipher_symbol'), false);
+      }
+    });
+  });
+
   describe('Random Challenge Generation', () => {
-    it('should generate random challenges across all 5 types', () => {
+    it('should generate random challenges across all 7 types', () => {
       const challenge = generateChallenge('random', 'insane');
       assert.ok(CHALLENGE_TYPES.includes(challenge.type));
       assert.ok(challenge.question);

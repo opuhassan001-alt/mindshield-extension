@@ -59,7 +59,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           });
         }
 
-        if (state.isBlocked) {
+        // Check dual limit threshold (Reels count >= 10 OR Elapsed time >= 15 min)
+        const sessionStatus = await stateManager.checkSessionStatus();
+        if (sessionStatus.isBlocked) {
           if (!activeChallenge) {
             activeChallenge = generateChallenge(config.challengeType, config.difficulty);
           }
@@ -70,7 +72,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             challenge: activeChallenge,
             failedAttempts: state.failedAttempts,
             maxAttempts: config.maxFailedAttempts,
-            reelCount: state.reelCount,
+            reelCount: sessionStatus.reelCount,
+            elapsedMinutes: sessionStatus.elapsedMinutes,
+            reason: sessionStatus.reason,
             config
           });
         }
@@ -79,7 +83,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return sendResponse({
           isBlocked: false,
           isCooldown: false,
-          reelCount: state.reelCount,
+          reelCount: sessionStatus.reelCount,
+          elapsedMinutes: sessionStatus.elapsedMinutes,
           config
         });
       }

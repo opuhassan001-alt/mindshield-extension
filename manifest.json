@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "MindShield: ADHD Reels & Shorts Blocker",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Stop compulsive short-form video addiction. Blocks reels with brain-activating puzzles and cooldown timers.",
   "permissions": [
     "storage",

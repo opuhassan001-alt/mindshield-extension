@@ -180,6 +180,12 @@ function initUrlObserver() {
   });
 }
 
+// Periodic time threshold ticker: ensures 15-minute time limit blocks the feed
+// even if user stays on a single reel without scrolling or URL change.
+setInterval(() => {
+  checkCurrentStatus();
+}, 5000);
+
 // Initialize script
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {

@@ -137,4 +137,28 @@ describe('StateManager', () => {
     const stored = await manager.getLastFailedChallenge();
     assert.deepEqual(stored, res.lastFailedChallenge);
   });
+
+  describe('Dual Trigger Evaluation (10 Reels OR 15 Minutes)', () => {
+    it('should trigger block via checkSessionStatus when reel count breaches limit', async () => {
+      // Set reel count to 3 (which equals reelLimit = 3)
+      await manager.recordReelView();
+      await manager.recordReelView();
+      await manager.recordReelView();
+
+      const session = await manager.checkSessionStatus();
+      assert.equal(session.isBlocked, true);
+      assert.equal(session.reason, 'reel_limit');
+    });
+
+    it('should trigger block via checkSessionStatus when elapsed time breaches time limit', async () => {
+      // Simulate session starting 16 minutes ago (breaching timeLimitMinutes = 5)
+      manager.state.sessionStartTime = Date.now() - (16 * 60 * 1000);
+      manager.state.reelCount = 1; // Only 1 reel watched, well below reelLimit (3)
+
+      const session = await manager.checkSessionStatus();
+      assert.equal(session.isBlocked, true);
+      assert.equal(session.reason, 'time_limit');
+      assert.ok(session.elapsedMinutes >= 15);
+    });
+  });
 });
