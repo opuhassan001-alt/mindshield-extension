@@ -766,9 +766,19 @@
 
   function sendMessageToBg(msg) {
     return new Promise(resolve => {
-      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-        chrome.runtime.sendMessage(msg, res => resolve(res || {}));
-      } else {
+      try {
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+          chrome.runtime.sendMessage(msg, res => {
+            if (chrome.runtime.lastError) {
+              resolve({});
+            } else {
+              resolve(res || {});
+            }
+          });
+        } else {
+          resolve({});
+        }
+      } catch {
         resolve({});
       }
     });

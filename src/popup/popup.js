@@ -16,7 +16,7 @@ async function loadData() {
   }
 
   chrome.runtime.sendMessage({ action: 'GET_POPUP_DATA' }, (res) => {
-    if (!res) return;
+    if (chrome.runtime.lastError || !res) return;
 
     const { state, config, stats, isCooldown, remainingSeconds } = res;
 
@@ -77,13 +77,13 @@ async function loadData() {
 // Button actions
 document.getElementById('btn-manual-break')?.addEventListener('click', () => {
   chrome.runtime.sendMessage({ action: 'START_COOLDOWN' }, () => {
-    loadData();
+    if (!chrome.runtime.lastError) loadData();
   });
 });
 
 document.getElementById('btn-reset-session')?.addEventListener('click', () => {
   chrome.runtime.sendMessage({ action: 'RESET_SESSION' }, () => {
-    loadData();
+    if (!chrome.runtime.lastError) loadData();
   });
 });
 

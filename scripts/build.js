@@ -1153,11 +1153,12 @@ chrome.runtime.onStartup.addListener(async () => {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   (async () => {
-    await stateManager.init();
-    const config = await stateManager.getConfig();
-    let state = await stateManager.getState();
+    try {
+      await stateManager.init();
+      const config = await stateManager.getConfig();
+      let state = await stateManager.getState();
 
-    switch (request.action) {
+      switch (request.action) {
       case 'CHECK_STATUS': {
         const cooldown = await stateManager.checkCooldownStatus();
         const lastFailedChallenge = await stateManager.getLastFailedChallenge();
@@ -1288,9 +1289,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       default:
         return sendResponse({ error: 'Unknown action' });
     }
-  })();
+  } catch (err) {
+    console.error('[MindShield BG] Error handling message:', err);
+    sendResponse({ error: err.message });
+  }
+})();
 
-  return true;
+return true;
 });
 `;
 
@@ -2066,9 +2071,19 @@ const contentBundleContent = `/**
 
   function sendMessageToBg(msg) {
     return new Promise(resolve => {
-      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-        chrome.runtime.sendMessage(msg, res => resolve(res || {}));
-      } else {
+      try {
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+          chrome.runtime.sendMessage(msg, res => {
+            if (chrome.runtime.lastError) {
+              resolve({});
+            } else {
+              resolve(res || {});
+            }
+          });
+        } else {
+          resolve({});
+        }
+      } catch {
         resolve({});
       }
     });

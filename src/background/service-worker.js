@@ -39,11 +39,12 @@ chrome.runtime.onStartup.addListener(async () => {
 // Handle incoming messages
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   (async () => {
-    await stateManager.init();
-    const config = await stateManager.getConfig();
-    const state = await stateManager.getState();
+    try {
+      await stateManager.init();
+      const config = await stateManager.getConfig();
+      const state = await stateManager.getState();
 
-    switch (request.action) {
+      switch (request.action) {
       case 'CHECK_STATUS': {
         const cooldown = await stateManager.checkCooldownStatus();
         const lastFailedChallenge = await stateManager.getLastFailedChallenge();
@@ -158,7 +159,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       default:
         return sendResponse({ error: 'Unknown action' });
     }
-  })();
+  } catch (err) {
+    console.error('[MindShield BG] Error handling message:', err);
+    sendResponse({ error: err.message });
+  }
+})();
 
-  return true; // Keep message channel open for async response
+return true; // Keep message channel open for async response
 });

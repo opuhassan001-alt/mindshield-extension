@@ -20,11 +20,20 @@ function log(...args) {
  */
 function sendMessageToBg(message) {
   return new Promise((resolve) => {
-    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-      chrome.runtime.sendMessage(message, (res) => {
-        resolve(res || {});
-      });
-    } else {
+    try {
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage(message, (res) => {
+          if (chrome.runtime.lastError) {
+            // Context invalidated or service worker sleeping
+            resolve({});
+          } else {
+            resolve(res || {});
+          }
+        });
+      } else {
+        resolve({});
+      }
+    } catch {
       resolve({});
     }
   });

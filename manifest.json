@@ -11,9 +11,7 @@
     "https://*.instagram.com/*",
     "https://*.youtube.com/*",
     "https://*.facebook.com/*",
-    "https://*.tiktok.com/*",
-    "http://*/*",
-    "https://*/*"
+    "https://*.tiktok.com/*"
   ],
   "background": {
     "service_worker": "dist/background.bundle.js"
@@ -25,9 +23,9 @@
         "https://*.youtube.com/*",
         "https://*.facebook.com/*",
         "https://*.tiktok.com/*",
-        "http://*/*playground.html*",
-        "https://*/*playground.html*",
-        "file://*/*playground.html*"
+        "http://localhost/*",
+        "http://127.0.0.1/*",
+        "file:///*"
       ],
       "js": ["dist/content.bundle.js"],
       "css": ["src/content/overlay.css"],
