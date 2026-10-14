@@ -392,7 +392,7 @@
     }
 
     function triggerChallenge() {
-      const challenge = generateChallenge('random', 'medium');
+      const challenge = generateChallenge('random', 'insane');
       let attempts = 0;
 
       overlay.showChallenge({
@@ -401,7 +401,7 @@
         maxAttempts: 3,
         onSubmit: async (ans) => {
           const isCorrect = verifyAnswer(challenge, ans);
-          const res = await stateManager.recordChallengeAttempt(isCorrect);
+          const res = await stateManager.recordChallengeAttempt(isCorrect, challenge);
 
           if (res.unlocked) {
             overlay.celebrateAndClose(() => {
@@ -412,19 +412,19 @@
             overlay.showCooldown(1800, () => {
               overlay.removeOverlay();
               updateUI(0, false, false);
-            });
+            }, challenge);
           } else {
             attempts = res.failedAttempts;
             overlay.showErrorFeedback('Incorrect answer! Prefrontal focus required.', 3 - attempts);
           }
         },
         onGiveUp: async () => {
-          await stateManager.startCooldown(30);
+          await stateManager.startCooldown(30, challenge);
           updateUI(0, true, true);
           overlay.showCooldown(1800, () => {
             overlay.removeOverlay();
             updateUI(0, false, false);
-          });
+          }, challenge);
         }
       });
     }

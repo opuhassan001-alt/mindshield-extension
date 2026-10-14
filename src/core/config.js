@@ -11,8 +11,8 @@ export const DEFAULT_CONFIG = {
   maxFailedAttempts: 3,       // Number of tries before forcing cooldown
   
   // Brain Challenge Settings
-  difficulty: 'medium',       // 'easy' | 'medium' | 'hard'
-  challengeType: 'random',    // 'random' | 'math' | 'sequence' | 'stroop'
+  difficulty: 'insane',       // 'easy' | 'medium' | 'hard' | 'insane' (Maximum cognitive difficulty)
+  challengeType: 'random',    // 'random' | 'math' | 'sequence' | 'stroop' | 'logic' | 'matrix'
   
   // Platform Toggles
   platforms: {
@@ -30,5 +30,7 @@ export const DEFAULT_CONFIG = {
 export const STORAGE_KEYS = {
   CONFIG: 'mindshield_config',
   STATE: 'mindshield_state',
-  STATS: 'mindshield_stats'
+  STATS: 'mindshield_stats',
+  ACTIVE_CHALLENGE: 'mindshield_active_challenge',
+  LAST_FAILED_CHALLENGE: 'mindshield_last_failed_challenge'
 };

@@ -154,6 +154,11 @@ export class OverlayManager {
         <div class="ms-subtitle">${challenge.instruction}</div>
         <div class="ms-stroop-word" style="color: ${challenge.inkColor};">${challenge.word}</div>
       `;
+    } else if (challenge.type === 'matrix') {
+      challengeContent = `
+        <div class="ms-subtitle">${challenge.instruction}</div>
+        <div class="ms-matrix-grid">${challenge.question}</div>
+      `;
     } else {
       challengeContent = `
         <div class="ms-subtitle">${challenge.instruction}</div>
@@ -259,7 +264,7 @@ export class OverlayManager {
   /**
    * Render Cooldown Screen with Science-backed ADHD Soundscapes
    */
-  showCooldown(remainingSeconds, onComplete) {
+  showCooldown(remainingSeconds, onComplete, solutionInfo = null) {
     this.trapScroll();
     if (this.cooldownInterval) {
       clearInterval(this.cooldownInterval);
@@ -275,6 +280,32 @@ export class OverlayManager {
     };
 
     const soundIcon = getMuted() ? '🔇' : '🔊';
+
+    let solutionHtml = '';
+    if (solutionInfo && solutionInfo.question) {
+      solutionHtml = `
+        <div class="ms-solution-box">
+          <div class="ms-solution-header">
+            <span>💡 Missed Puzzle Solution & Breakdown</span>
+            <button type="button" class="ms-solution-toggle-btn" id="ms-solution-toggle-btn">Hide Solution</button>
+          </div>
+          <div class="ms-solution-body" id="ms-solution-body">
+            <div class="ms-sol-row">
+              <span class="ms-sol-label">Question:</span>
+              <p class="ms-sol-val-q">${solutionInfo.question}</p>
+            </div>
+            <div class="ms-sol-row">
+              <span class="ms-sol-label">Correct Answer:</span>
+              <span class="ms-sol-val-ans">${solutionInfo.answer}</span>
+            </div>
+            <div class="ms-sol-row">
+              <span class="ms-sol-label">Step-by-Step Logic:</span>
+              <p class="ms-sol-val-exp">${solutionInfo.explanation || 'Analyze the underlying patterns to strengthen cognitive control.'}</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
 
     root.innerHTML = `
       <div class="ms-container">
@@ -312,6 +343,9 @@ export class OverlayManager {
               Brown noise raises background neural stochastic resonance to calm dopamine-starved ADHD brains.
             </div>
           </div>
+
+          <!-- Unsolved Challenge Solution & Explanation -->
+          ${solutionHtml}
         </div>
 
         <div class="ms-quote">
@@ -328,6 +362,15 @@ export class OverlayManager {
     const soundscapeToggleBtn = root.querySelector('#ms-soundscape-toggle');
     const soundscapeDesc = root.querySelector('#ms-soundscape-desc');
     const soundscapeStatus = root.querySelector('#ms-soundscape-status');
+    const solutionToggleBtn = root.querySelector('#ms-solution-toggle-btn');
+    const solutionBody = root.querySelector('#ms-solution-body');
+
+    if (solutionToggleBtn && solutionBody) {
+      solutionToggleBtn.addEventListener('click', () => {
+        const isHidden = solutionBody.classList.toggle('hidden');
+        solutionToggleBtn.textContent = isHidden ? 'Show Solution' : 'Hide Solution';
+      });
+    }
 
     if (soundToggleBtn) {
       soundToggleBtn.addEventListener('click', () => {

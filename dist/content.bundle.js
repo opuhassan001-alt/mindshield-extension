@@ -6,6 +6,7 @@
  *  - Floating live count pill (real-time feedback for the user)
  *  - Scroll trap and full-screen challenge overlay
  *  - Pure Web Audio API focus tones, fanfare, error buzz, and neuro soundscapes
+ *  - Missed challenge solution & explanation breakdown on cooldown screen
  */
 (() => {
   'use strict';
@@ -47,7 +48,6 @@
         return { match: true, platform };
       }
     }
-    // Also consider active if on Instagram with reels or viewing reel popup
     if (/instagram\.com\/(?:reel|reels)/i.test(url)) {
       return { match: true, platform: 'instagram' };
     }
@@ -323,7 +323,6 @@
         rightOsc.start();
         currentSoundscapeNodes.push(leftOsc, rightOsc, masterGain);
       } else {
-        // Pink noise fallback
         const bufferSize = 5 * soundscapeCtx.sampleRate;
         const buffer = soundscapeCtx.createBuffer(1, bufferSize, soundscapeCtx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -468,6 +467,9 @@
       if (challenge.type === 'stroop') {
         challengeContent = '<div class="ms-subtitle">' + challenge.instruction + '</div>' +
           '<div class="ms-stroop-word" style="color: ' + challenge.inkColor + ';">' + challenge.word + '</div>';
+      } else if (challenge.type === 'matrix') {
+        challengeContent = '<div class="ms-subtitle">' + challenge.instruction + '</div>' +
+          '<div class="ms-matrix-grid">' + challenge.question + '</div>';
       } else {
         challengeContent = '<div class="ms-subtitle">' + challenge.instruction + '</div>' +
           '<div class="ms-challenge-question">' + challenge.question + '</div>';
@@ -558,7 +560,7 @@
       }
     }
 
-    showCooldown(remainingSeconds, onComplete) {
+    showCooldown(remainingSeconds, onComplete, solutionInfo = null) {
       this.trapScroll();
       if (this.cooldownInterval) clearInterval(this.cooldownInterval);
 
@@ -572,6 +574,32 @@
       };
 
       const soundIcon = getMuted() ? '🔇' : '🔊';
+
+      let solutionHtml = '';
+      if (solutionInfo && solutionInfo.question) {
+        solutionHtml = [
+          '<div class="ms-solution-box">',
+          '  <div class="ms-solution-header">',
+          '    <span>💡 Missed Puzzle Solution & Explanation</span>',
+          '    <button type="button" class="ms-solution-toggle-btn" id="ms-solution-toggle-btn">Hide Solution</button>',
+          '  </div>',
+          '  <div class="ms-solution-body" id="ms-solution-body">',
+          '    <div class="ms-sol-row">',
+          '      <span class="ms-sol-label">Question:</span>',
+          '      <p class="ms-sol-val-q">' + solutionInfo.question + '</p>',
+          '    </div>',
+          '    <div class="ms-sol-row">',
+          '      <span class="ms-sol-label">Correct Answer:</span>',
+          '      <span class="ms-sol-val-ans">' + solutionInfo.answer + '</span>',
+          '    </div>',
+          '    <div class="ms-sol-row">',
+          '      <span class="ms-sol-label">Step-by-Step Logic Breakdown:</span>',
+          '      <p class="ms-sol-val-exp">' + (solutionInfo.explanation || 'Analyze the underlying patterns to strengthen cognitive control.') + '</p>',
+          '    </div>',
+          '  </div>',
+          '</div>'
+        ].join('');
+      }
 
       root.innerHTML = [
         '<div class="ms-container">',
@@ -600,6 +628,7 @@
         '      </div>',
         '      <div class="ms-soundscape-desc" id="ms-soundscape-desc">Brown noise raises background neural stochastic resonance to calm dopamine-starved ADHD brains.</div>',
         '    </div>',
+        '    ' + solutionHtml,
         '  </div>',
         '  <div class="ms-quote">"The ability to delay gratification is the ultimate superpower in the age of algorithms."</div>',
         '</div>'
@@ -613,6 +642,15 @@
       const soundscapeToggleBtn = root.querySelector('#ms-soundscape-toggle');
       const soundscapeDesc = root.querySelector('#ms-soundscape-desc');
       const soundscapeStatus = root.querySelector('#ms-soundscape-status');
+      const solutionToggleBtn = root.querySelector('#ms-solution-toggle-btn');
+      const solutionBody = root.querySelector('#ms-solution-body');
+
+      if (solutionToggleBtn && solutionBody) {
+        solutionToggleBtn.addEventListener('click', () => {
+          const isHidden = solutionBody.classList.toggle('hidden');
+          solutionToggleBtn.textContent = isHidden ? 'Show Solution' : 'Hide Solution';
+        });
+      }
 
       if (soundToggleBtn) {
         soundToggleBtn.addEventListener('click', () => {
@@ -681,11 +719,6 @@
           '<span id="ms-pill-text">MindShield: <span class="ms-pill-badge" id="ms-pill-count">0 / 5</span> Reels</span>'
         ].join('');
         document.body.appendChild(this.pill);
-
-        this.pill.addEventListener('click', () => {
-          // Send break action or check status
-          console.log('[MindShield] Pill clicked - checking status...');
-        });
       }
       return this.pill;
     }
@@ -712,7 +745,6 @@
         if (textEl) textEl.innerHTML = 'MindShield: <span class="ms-pill-badge" id="ms-pill-count">' + count + ' / ' + limit + '</span> Reels';
       }
 
-      // Pulse animation
       el.classList.remove('pulse');
       void el.offsetWidth;
       el.classList.add('pulse');
@@ -750,7 +782,7 @@
       overlayManager.showCooldown(res.remainingSeconds, () => {
         overlayManager.removeOverlay();
         checkCurrentStatus();
-      });
+      }, res.lastFailedChallenge);
       return;
     }
 
@@ -782,18 +814,21 @@
           overlayManager.showCooldown(response.remainingSeconds, () => {
             overlayManager.removeOverlay();
             checkCurrentStatus();
-          });
+          }, response.lastFailedChallenge || currentChallenge);
         } else {
           overlayManager.showErrorFeedback('Incorrect answer, try again!', (response.maxAttempts || 3) - response.failedAttempts);
         }
       },
       onGiveUp: async () => {
-        const response = await sendMessageToBg({ action: 'START_COOLDOWN' });
+        const response = await sendMessageToBg({
+          action: 'START_COOLDOWN',
+          failedChallenge: currentChallenge
+        });
         pillManager.update(0, currentReelLimit, true, true);
         overlayManager.showCooldown(response.remainingSeconds, () => {
           overlayManager.removeOverlay();
           checkCurrentStatus();
-        });
+        }, currentChallenge);
       }
     });
   }
@@ -858,7 +893,6 @@
 
   async function registerReelWatched(source) {
     const now = Date.now();
-    // Throttle: don't count twice within 2.5 seconds
     if (now - lastCountedTimestamp < 2500) return;
     lastCountedTimestamp = now;
 
@@ -881,7 +915,6 @@
     }
   }
 
-  // Signal A: Video Playback Event (Instagram, YouTube Shorts, Facebook, TikTok)
   function onVideoPlaying(video) {
     const check = isReelsUrl(window.location.href);
     if (!check.match) return;
@@ -895,7 +928,6 @@
       activeVideoDwellTimer = null;
     }
 
-    // Require 1.8 seconds of continuous viewing before counting (prevents rapid-swipe false counts)
     activeVideoDwellTimer = setTimeout(() => {
       if (video && !video.paused && isElementVisible(video)) {
         countedVideoKeys.add(key);
@@ -910,7 +942,6 @@
     }
   }, true);
 
-  // Signal B: URL & SPA Navigation Watcher
   function checkUrlChange() {
     const current = window.location.href;
     if (current !== lastUrl) {
@@ -924,17 +955,14 @@
     }
   }
 
-  // YouTube Shorts custom navigation event
   window.addEventListener('yt-navigate-finish', checkUrlChange);
   window.addEventListener('popstate', checkUrlChange);
   window.addEventListener('hashchange', checkUrlChange);
 
-  // Periodic fallback check (catches silent SPA changes)
   setInterval(() => {
     checkUrlChange();
   }, 400);
 
-  // Start immediately
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
       checkCurrentStatus();

@@ -46,12 +46,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     switch (request.action) {
       case 'CHECK_STATUS': {
         const cooldown = await stateManager.checkCooldownStatus();
+        const lastFailedChallenge = await stateManager.getLastFailedChallenge();
         if (cooldown.isCooldown) {
           await updateBadge();
           return sendResponse({
             isBlocked: true,
             isCooldown: true,
-            remainingSeconds: cooldown.remainingSeconds
+            remainingSeconds: cooldown.remainingSeconds,
+            lastFailedChallenge,
+            reelCount: state.reelCount,
+            config
           });
         }
 
@@ -65,7 +69,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             isCooldown: false,
             challenge: activeChallenge,
             failedAttempts: state.failedAttempts,
-            maxAttempts: config.maxFailedAttempts
+            maxAttempts: config.maxFailedAttempts,
+            reelCount: state.reelCount,
+            config
           });
         }
 
@@ -98,7 +104,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
 
         const isCorrect = verifyAnswer(activeChallenge, request.answer);
-        const attemptResult = await stateManager.recordChallengeAttempt(isCorrect);
+        const attemptResult = await stateManager.recordChallengeAttempt(isCorrect, activeChallenge);
 
         if (attemptResult.unlocked) {
           activeChallenge = null;
@@ -110,26 +116,30 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           cooldownTriggered: attemptResult.cooldownTriggered,
           remainingSeconds: attemptResult.cooldownEndTime ? Math.ceil((attemptResult.cooldownEndTime - Date.now()) / 1000) : 0,
           failedAttempts: attemptResult.failedAttempts || 0,
-          maxAttempts: config.maxFailedAttempts
+          maxAttempts: config.maxFailedAttempts,
+          lastFailedChallenge: attemptResult.lastFailedChallenge || activeChallenge
         });
       }
 
       case 'START_COOLDOWN': {
-        const { cooldownEndTime, remainingSeconds } = await stateManager.startCooldown();
+        const challengeToSave = request.failedChallenge || activeChallenge;
+        const { cooldownEndTime, remainingSeconds, lastFailedChallenge } = await stateManager.startCooldown(null, challengeToSave);
         activeChallenge = null;
         await updateBadge();
-        return sendResponse({ cooldownEndTime, remainingSeconds });
+        return sendResponse({ cooldownEndTime, remainingSeconds, lastFailedChallenge });
       }
 
       case 'GET_POPUP_DATA': {
         const cooldown = await stateManager.checkCooldownStatus();
         const stats = await stateManager.getStats();
+        const lastFailedChallenge = await stateManager.getLastFailedChallenge();
         return sendResponse({
           state,
           config,
           stats,
           isCooldown: cooldown.isCooldown,
-          remainingSeconds: cooldown.remainingSeconds
+          remainingSeconds: cooldown.remainingSeconds,
+          lastFailedChallenge
         });
       }
 

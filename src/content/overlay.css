@@ -421,4 +421,115 @@
   background: #ef4444 !important;
 }
 
+/* Matrix & Grid Question Formatting */
+.ms-matrix-grid {
+  font-family: 'Courier New', Courier, monospace !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  line-height: 1.6 !important;
+  background: #090d16 !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  border-radius: 10px !important;
+  padding: 14px 20px !important;
+  color: #38bdf8 !important;
+  white-space: pre-wrap !important;
+  margin: 14px auto !important;
+  max-width: 320px !important;
+  letter-spacing: 2px !important;
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Missed Challenge & Solution Explanation Card */
+.ms-solution-box {
+  background: rgba(15, 23, 42, 0.9) !important;
+  border: 1px solid rgba(16, 185, 129, 0.35) !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  margin-top: 20px !important;
+  text-align: left !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+.ms-solution-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #34d399 !important;
+}
+
+.ms-solution-toggle-btn {
+  background: rgba(16, 185, 129, 0.15) !important;
+  border: 1px solid rgba(16, 185, 129, 0.4) !important;
+  color: #a7f3d0 !important;
+  border-radius: 6px !important;
+  padding: 4px 10px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+}
+
+.ms-solution-toggle-btn:hover {
+  background: rgba(16, 185, 129, 0.3) !important;
+  color: #ffffff !important;
+}
+
+.ms-solution-body {
+  margin-top: 14px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding-top: 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+.ms-solution-body.hidden {
+  display: none !important;
+}
+
+.ms-sol-row {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+}
+
+.ms-sol-label {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  color: #94a3b8 !important;
+  letter-spacing: 0.5px !important;
+}
+
+.ms-sol-val-q {
+  font-size: 13px !important;
+  color: #e2e8f0 !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+}
+
+.ms-sol-val-ans {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.1) !important;
+  border-radius: 6px !important;
+  padding: 4px 10px !important;
+  display: inline-block !important;
+  width: fit-content !important;
+}
+
+.ms-sol-val-exp {
+  font-size: 12px !important;
+  color: #cbd5e1 !important;
+  line-height: 1.5 !important;
+  background: rgba(0, 0, 0, 0.25) !important;
+  padding: 10px 12px !important;
+  border-radius: 8px !important;
+  border-left: 3px solid #10b981 !important;
+  margin: 0 !important;
+}
+
 

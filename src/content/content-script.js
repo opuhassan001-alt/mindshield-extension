@@ -38,10 +38,9 @@ function handleLock(res) {
 
   if (res.isCooldown) {
     overlayManager.showCooldown(res.remainingSeconds, () => {
-      // When cooldown completes, unlock
       overlayManager.removeOverlay();
       checkCurrentStatus();
-    });
+    }, res.lastFailedChallenge);
     return;
   }
 
@@ -69,17 +68,20 @@ function handleLock(res) {
         overlayManager.showCooldown(response.remainingSeconds, () => {
           overlayManager.removeOverlay();
           checkCurrentStatus();
-        });
+        }, response.lastFailedChallenge || currentChallenge);
       } else {
         overlayManager.showErrorFeedback('Incorrect answer, try again!', (response.maxAttempts || 3) - response.failedAttempts);
       }
     },
     onGiveUp: async () => {
-      const response = await sendMessageToBg({ action: 'START_COOLDOWN' });
+      const response = await sendMessageToBg({
+        action: 'START_COOLDOWN',
+        failedChallenge: currentChallenge
+      });
       overlayManager.showCooldown(response.remainingSeconds, () => {
         overlayManager.removeOverlay();
         checkCurrentStatus();
-      });
+      }, currentChallenge);
     }
   });
 }

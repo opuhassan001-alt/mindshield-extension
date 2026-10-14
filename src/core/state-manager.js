@@ -13,7 +13,8 @@ export class StateManager {
       sessionStartTime: Date.now(),
       isBlocked: false,
       cooldownEndTime: null,
-      failedAttempts: 0
+      failedAttempts: 0,
+      lastFailedChallenge: null
     };
     this.stats = {
       date: new Date().toISOString().slice(0, 10),
@@ -165,7 +166,7 @@ export class StateManager {
   /**
    * Start the cooldown penalty (e.g. 30 or 40 minutes)
    */
-  async startCooldown(durationMinutes = null) {
+  async startCooldown(durationMinutes = null, failedChallenge = null) {
     const mins = durationMinutes || this.config.cooldownMinutes || 30;
     const cooldownEndTime = Date.now() + (mins * 60 * 1000);
 
@@ -174,21 +175,36 @@ export class StateManager {
     this.state.reelCount = 0;
     this.stats.cooldownsTriggeredToday += 1;
 
+    if (failedChallenge) {
+      this.state.lastFailedChallenge = {
+        question: failedChallenge.question,
+        answer: failedChallenge.answer,
+        explanation: failedChallenge.explanation,
+        title: failedChallenge.title,
+        hint: failedChallenge.hint
+      };
+    }
+
     await this._persistState();
     await this._persistStats();
 
-    return { cooldownEndTime, remainingSeconds: mins * 60 };
+    return {
+      cooldownEndTime,
+      remainingSeconds: mins * 60,
+      lastFailedChallenge: this.state.lastFailedChallenge
+    };
   }
 
   /**
    * Record challenge answer attempt
    */
-  async recordChallengeAttempt(success) {
+  async recordChallengeAttempt(success, challenge = null) {
     if (success) {
       // Prefrontal cortex unlocked! Reset session counters
       this.state.isBlocked = false;
       this.state.reelCount = 0;
       this.state.failedAttempts = 0;
+      this.state.lastFailedChallenge = null;
       this.state.sessionStartTime = Date.now();
       this.stats.challengesSolvedToday += 1;
 
@@ -200,13 +216,14 @@ export class StateManager {
       this.state.failedAttempts += 1;
 
       if (this.state.failedAttempts >= this.config.maxFailedAttempts) {
-        // Exceeded allowed attempts -> Start cooldown lockout
-        const { cooldownEndTime } = await this.startCooldown();
+        // Exceeded allowed attempts -> Start cooldown lockout & save solution for review
+        const { cooldownEndTime, lastFailedChallenge } = await this.startCooldown(null, challenge);
         return {
           unlocked: false,
           cooldownTriggered: true,
           cooldownEndTime,
-          failedAttempts: this.state.failedAttempts
+          failedAttempts: this.state.failedAttempts,
+          lastFailedChallenge
         };
       }
 
@@ -219,6 +236,10 @@ export class StateManager {
     }
   }
 
+  async getLastFailedChallenge() {
+    return this.state.lastFailedChallenge || null;
+  }
+
   /**
    * Force manual session reset
    */
@@ -227,6 +248,7 @@ export class StateManager {
     this.state.isBlocked = false;
     this.state.failedAttempts = 0;
     this.state.cooldownEndTime = null;
+    this.state.lastFailedChallenge = null;
     this.state.sessionStartTime = Date.now();
     await this._persistState();
   }

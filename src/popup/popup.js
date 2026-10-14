@@ -41,10 +41,20 @@ async function loadData() {
     // Cooldown Card
     const cooldownCard = document.getElementById('cooldown-card');
     const cooldownTime = document.getElementById('cooldown-time');
+    const solutionBox = document.getElementById('popup-solution-box');
 
     if (isCooldown && remainingSeconds > 0) {
       cooldownCard.classList.remove('hidden');
       cooldownTime.textContent = formatTime(remainingSeconds);
+
+      if (res.lastFailedChallenge && res.lastFailedChallenge.question) {
+        solutionBox.classList.remove('hidden');
+        document.getElementById('popup-solution-q').textContent = res.lastFailedChallenge.question;
+        document.getElementById('popup-solution-ans').textContent = res.lastFailedChallenge.answer;
+        document.getElementById('popup-solution-exp').textContent = res.lastFailedChallenge.explanation || '';
+      } else {
+        solutionBox.classList.add('hidden');
+      }
 
       let currentSecs = remainingSeconds;
       const interval = setInterval(() => {
@@ -59,6 +69,7 @@ async function loadData() {
       }, 1000);
     } else {
       cooldownCard.classList.add('hidden');
+      solutionBox.classList.add('hidden');
     }
   });
 }

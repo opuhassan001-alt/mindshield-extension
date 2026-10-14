@@ -116,4 +116,25 @@ describe('StateManager', () => {
     assert.equal(stats.totalReelsToday, 1);
     assert.equal(stats.challengesSolvedToday, 1);
   });
+
+  it('should store and retrieve lastFailedChallenge with explanation when cooldown is triggered', async () => {
+    const mockChallenge = {
+      question: 'A bat and ball cost $1.10. Bat is $1.00 more. Ball?',
+      answer: '5',
+      explanation: 'Ball = 5 cents, bat = $1.05.',
+      title: 'CRT Riddle'
+    };
+
+    // 1st fail
+    await manager.recordChallengeAttempt(false, mockChallenge);
+    // 2nd fail (triggers cooldown)
+    const res = await manager.recordChallengeAttempt(false, mockChallenge);
+    assert.equal(res.cooldownTriggered, true);
+    assert.ok(res.lastFailedChallenge);
+    assert.equal(res.lastFailedChallenge.answer, '5');
+    assert.equal(res.lastFailedChallenge.explanation, 'Ball = 5 cents, bat = $1.05.');
+
+    const stored = await manager.getLastFailedChallenge();
+    assert.deepEqual(stored, res.lastFailedChallenge);
+  });
 });
