@@ -4,12 +4,13 @@
  */
 
 import { isReelsUrl, pauseAllMedia, getReelIdFromUrl } from '../core/detector.js';
-import { OverlayManager } from './overlay.js';
+import { OverlayManager, PillManager } from './overlay.js';
 
 let currentReelId = null;
 let reelTimer = null;
 let currentChallenge = null;
 let overlayManager = new OverlayManager();
+let pillManager = new PillManager();
 
 function log(...args) {
   console.log('[MindShield]', ...args);
@@ -45,6 +46,15 @@ function sendMessageToBg(message) {
 function handleLock(res) {
   pauseAllMedia();
 
+  pillManager.update({
+    reelCount: res.reelCount || (res.config && res.config.reelLimit) || 10,
+    limit: (res.config && res.config.reelLimit) || 10,
+    elapsedMinutes: res.elapsedMinutes || 15,
+    timeLimitMinutes: (res.config && res.config.timeLimitMinutes) || 15,
+    isBlocked: true,
+    isCooldown: res.isCooldown
+  });
+
   if (res.isCooldown) {
     overlayManager.showCooldown(res.remainingSeconds, () => {
       overlayManager.removeOverlay();
@@ -72,8 +82,17 @@ function handleLock(res) {
         overlayManager.celebrateAndClose(() => {
           currentChallenge = null;
           log('Challenge passed! Reels temporarily unlocked.');
+          checkCurrentStatus();
         });
       } else if (response.cooldownTriggered) {
+        pillManager.update({
+          reelCount: 0,
+          limit: (res.config && res.config.reelLimit) || 10,
+          elapsedMinutes: 0,
+          timeLimitMinutes: (res.config && res.config.timeLimitMinutes) || 15,
+          isBlocked: true,
+          isCooldown: true
+        });
         overlayManager.showCooldown(response.remainingSeconds, () => {
           overlayManager.removeOverlay();
           checkCurrentStatus();
@@ -86,6 +105,14 @@ function handleLock(res) {
       const response = await sendMessageToBg({
         action: 'START_COOLDOWN',
         failedChallenge: currentChallenge
+      });
+      pillManager.update({
+        reelCount: 0,
+        limit: (res.config && res.config.reelLimit) || 10,
+        elapsedMinutes: 0,
+        timeLimitMinutes: (res.config && res.config.timeLimitMinutes) || 15,
+        isBlocked: true,
+        isCooldown: true
       });
       overlayManager.showCooldown(response.remainingSeconds, () => {
         overlayManager.removeOverlay();
@@ -101,6 +128,7 @@ function handleLock(res) {
 async function checkCurrentStatus() {
   const urlCheck = isReelsUrl(window.location.href);
   if (!urlCheck.match) {
+    pillManager.remove();
     overlayManager.removeOverlay();
     return;
   }
@@ -109,6 +137,15 @@ async function checkCurrentStatus() {
     action: 'CHECK_STATUS',
     url: window.location.href,
     platform: urlCheck.platform
+  });
+
+  pillManager.update({
+    reelCount: res.reelCount || 0,
+    limit: (res.config && res.config.reelLimit) || 10,
+    elapsedMinutes: res.elapsedMinutes || 0,
+    timeLimitMinutes: (res.config && res.config.timeLimitMinutes) || 15,
+    isBlocked: res.isBlocked,
+    isCooldown: res.isCooldown
   });
 
   if (res.isBlocked || res.isCooldown) {
@@ -140,6 +177,15 @@ async function onNewReelDetected(reelId) {
       action: 'REEL_SCROLLED',
       url: window.location.href,
       platform: urlCheck.platform
+    });
+
+    pillManager.update({
+      reelCount: res.reelCount || 0,
+      limit: (res.config && res.config.reelLimit) || 10,
+      elapsedMinutes: res.elapsedMinutes || 0,
+      timeLimitMinutes: (res.config && res.config.timeLimitMinutes) || 15,
+      isBlocked: res.shouldBlock,
+      isCooldown: res.isCooldown
     });
 
     if (res.shouldBlock || res.isCooldown) {

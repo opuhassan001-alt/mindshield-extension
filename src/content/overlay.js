@@ -20,6 +20,8 @@ import {
   getTrackInfo
 } from '../core/focus-soundscapes.js';
 
+import { getAngerMood } from '../core/anger-mood.js';
+
 export class OverlayManager {
   constructor() {
     this.root = null;
@@ -433,5 +435,118 @@ export class OverlayManager {
         if (timerVal) timerVal.textContent = formatTime(timeLeft);
       }
     }, 1000);
+  }
+}
+
+/**
+ * MindShield Floating Live Status Pill Manager
+ * Shows dynamic evolving emotion avatar & progress (Reels count & Elapsed time)
+ */
+export class PillManager {
+  constructor() {
+    this.pill = null;
+    this.currentLevel = null;
+    this.isMinimized = false;
+  }
+
+  getOrCreate() {
+    if (!this.pill || !document.body.contains(this.pill)) {
+      this.pill = document.createElement('div');
+      this.pill.id = 'mindshield-counter-pill';
+      this.pill.className = 'ms-pill ms-anger-0';
+      this.pill.innerHTML = `
+        <div class="ms-pill-avatar" id="ms-pill-avatar" title="Click to minimize/expand">
+          <span class="ms-pill-emoji" id="ms-pill-emoji">😇</span>
+        </div>
+        <div class="ms-pill-body" id="ms-pill-body">
+          <div class="ms-pill-header">
+            <span class="ms-pill-mood-badge" id="ms-pill-mood">শান্ত মেজাজ</span>
+            <span class="ms-pill-reels-count" id="ms-pill-count">0 / 10 Reels</span>
+          </div>
+          <div class="ms-pill-bar-track">
+            <div class="ms-pill-bar-fill" id="ms-pill-fill" style="width: 0%;"></div>
+          </div>
+          <div class="ms-pill-sub-info" id="ms-pill-sub">⏱️ 0m / 15m • Fresh session</div>
+        </div>
+        <button type="button" class="ms-pill-toggle-btn" id="ms-pill-toggle" title="Minimize / Expand">◀</button>
+      `;
+
+      const toggleBtn = this.pill.querySelector('#ms-pill-toggle');
+      const avatar = this.pill.querySelector('#ms-pill-avatar');
+      const toggleHandler = (e) => {
+        e.stopPropagation();
+        this.isMinimized = !this.isMinimized;
+        if (this.isMinimized) {
+          this.pill.classList.add('ms-minimized');
+          if (toggleBtn) toggleBtn.textContent = '▶';
+        } else {
+          this.pill.classList.remove('ms-minimized');
+          if (toggleBtn) toggleBtn.textContent = '◀';
+        }
+      };
+
+      if (toggleBtn) toggleBtn.addEventListener('click', toggleHandler);
+      if (avatar) avatar.addEventListener('click', toggleHandler);
+
+      document.body.appendChild(this.pill);
+    }
+    return this.pill;
+  }
+
+  update({ reelCount = 0, limit = 10, elapsedMinutes = 0, timeLimitMinutes = 15, isBlocked = false, isCooldown = false }) {
+    const el = this.getOrCreate();
+    const emojiEl = el.querySelector('#ms-pill-emoji');
+    const avatarEl = el.querySelector('#ms-pill-avatar');
+    const moodEl = el.querySelector('#ms-pill-mood');
+    const countEl = el.querySelector('#ms-pill-count');
+    const fillEl = el.querySelector('#ms-pill-fill');
+    const subEl = el.querySelector('#ms-pill-sub');
+
+    const moodInfo = getAngerMood({
+      reelCount,
+      reelLimit: limit,
+      elapsedMinutes,
+      timeLimitMinutes,
+      isBlocked,
+      isCooldown
+    });
+
+    for (let i = 0; i <= 10; i++) {
+      el.classList.remove('ms-anger-' + i);
+    }
+    el.classList.remove('ms-anger-cooldown');
+    el.classList.add(moodInfo.className);
+
+    if (this.currentLevel !== moodInfo.level) {
+      this.currentLevel = moodInfo.level;
+      if (avatarEl) {
+        avatarEl.classList.remove('pop');
+        void avatarEl.offsetWidth;
+        avatarEl.classList.add('pop');
+      }
+    }
+
+    if (emojiEl) emojiEl.textContent = moodInfo.emoji;
+    if (moodEl) moodEl.textContent = moodInfo.bengali;
+    if (fillEl) fillEl.style.width = moodInfo.percent + '%';
+
+    if (isCooldown) {
+      if (countEl) countEl.textContent = '🛑 Lockout';
+      if (subEl) subEl.textContent = 'ডোপামিন ডিটক্স মোড • Take a break';
+    } else if (isBlocked) {
+      if (countEl) countEl.textContent = '🔒 Limit Reached';
+      if (subEl) subEl.textContent = '💥 ' + moodInfo.quote;
+    } else {
+      if (countEl) countEl.textContent = `${reelCount} / ${limit} Reels`;
+      if (subEl) subEl.textContent = `⏱️ ${elapsedMinutes}m / ${timeLimitMinutes}m • ${moodInfo.quote}`;
+    }
+  }
+
+  remove() {
+    if (this.pill && this.pill.parentNode) {
+      this.pill.parentNode.removeChild(this.pill);
+      this.pill = null;
+      this.currentLevel = null;
+    }
   }
 }

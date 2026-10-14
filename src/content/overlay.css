@@ -363,62 +363,247 @@
   line-height: 1.4;
 }
 
-/* Live Floating Reel Counter Pill */
+/* Live Floating Dynamic Emoji Anger Bar / Pill */
 #mindshield-counter-pill {
   position: fixed !important;
   bottom: 24px !important;
   right: 24px !important;
   z-index: 2147483640 !important;
   background: rgba(15, 23, 42, 0.94) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  border: 1px solid rgba(99, 102, 241, 0.45) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(99, 102, 241, 0.25) !important;
   color: #f8fafc !important;
-  padding: 8px 16px !important;
+  padding: 8px 14px !important;
   border-radius: 9999px !important;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   font-size: 13px !important;
-  font-weight: 600 !important;
   display: flex !important;
   align-items: center !important;
-  gap: 8px !important;
+  gap: 10px !important;
   cursor: pointer !important;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
   user-select: none !important;
+  max-width: 380px !important;
 }
 
 #mindshield-counter-pill:hover {
   transform: translateY(-2px) !important;
-  border-color: #818cf8 !important;
   box-shadow: 0 14px 35px rgba(0, 0, 0, 0.6), 0 0 25px rgba(99, 102, 241, 0.4) !important;
 }
 
-#mindshield-counter-pill.pulse {
-  animation: msPillPulse 0.4s ease-out !important;
+#mindshield-counter-pill .ms-pill-avatar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  font-size: 20px !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
 
-@keyframes msPillPulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.12); }
+#mindshield-counter-pill .ms-pill-avatar.pop {
+  animation: msEmojiPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+@keyframes msEmojiPop {
+  0% { transform: scale(0.6); }
+  50% { transform: scale(1.4); }
   100% { transform: scale(1); }
 }
 
-#mindshield-counter-pill .ms-pill-badge {
-  background: #4f46e5 !important;
-  color: white !important;
+#mindshield-counter-pill .ms-pill-body {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  min-width: 170px !important;
+}
+
+#mindshield-counter-pill .ms-pill-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+}
+
+#mindshield-counter-pill .ms-pill-mood-badge {
   font-size: 11px !important;
   font-weight: 700 !important;
-  padding: 2px 8px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+#mindshield-counter-pill .ms-pill-reels-count {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #f1f5f9 !important;
+}
+
+#mindshield-counter-pill .ms-pill-bar-track {
+  width: 100% !important;
+  height: 5px !important;
+  background: rgba(255, 255, 255, 0.12) !important;
   border-radius: 9999px !important;
+  overflow: hidden !important;
 }
 
-#mindshield-counter-pill.warning .ms-pill-badge {
-  background: #f59e0b !important;
+#mindshield-counter-pill .ms-pill-bar-fill {
+  height: 100% !important;
+  border-radius: 9999px !important;
+  transition: width 0.3s ease, background 0.3s ease !important;
 }
 
-#mindshield-counter-pill.danger .ms-pill-badge {
-  background: #ef4444 !important;
+#mindshield-counter-pill .ms-pill-sub-info {
+  font-size: 11px !important;
+  color: #94a3b8 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+#mindshield-counter-pill .ms-pill-toggle-btn {
+  background: transparent !important;
+  border: none !important;
+  color: #64748b !important;
+  font-size: 10px !important;
+  cursor: pointer !important;
+  padding: 4px !important;
+  border-radius: 4px !important;
+  transition: color 0.2s !important;
+}
+
+#mindshield-counter-pill .ms-pill-toggle-btn:hover {
+  color: #f8fafc !important;
+}
+
+/* Minimized Floating State */
+#mindshield-counter-pill.ms-minimized {
+  padding: 6px !important;
+  gap: 0 !important;
+  border-radius: 50% !important;
+  width: 44px !important;
+  height: 44px !important;
+  justify-content: center !important;
+}
+
+#mindshield-counter-pill.ms-minimized .ms-pill-body,
+#mindshield-counter-pill.ms-minimized .ms-pill-toggle-btn {
+  display: none !important;
+}
+
+#mindshield-counter-pill.ms-minimized .ms-pill-avatar {
+  width: 100% !important;
+  height: 100% !important;
+  background: transparent !important;
+  font-size: 24px !important;
+}
+
+/* Dynamic Anger Levels (0 to 10) */
+#mindshield-counter-pill.ms-anger-0 {
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 15px rgba(16, 185, 129, 0.25) !important;
+}
+#mindshield-counter-pill.ms-anger-0 .ms-pill-mood-badge { color: #10b981 !important; }
+#mindshield-counter-pill.ms-anger-0 .ms-pill-bar-fill { background: #10b981 !important; }
+
+#mindshield-counter-pill.ms-anger-1 {
+  border-color: rgba(6, 182, 212, 0.4) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 15px rgba(6, 182, 212, 0.25) !important;
+}
+#mindshield-counter-pill.ms-anger-1 .ms-pill-mood-badge { color: #06b6d4 !important; }
+#mindshield-counter-pill.ms-anger-1 .ms-pill-bar-fill { background: #06b6d4 !important; }
+
+#mindshield-counter-pill.ms-anger-2 {
+  border-color: rgba(59, 130, 246, 0.4) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 15px rgba(59, 130, 246, 0.25) !important;
+}
+#mindshield-counter-pill.ms-anger-2 .ms-pill-mood-badge { color: #3b82f6 !important; }
+#mindshield-counter-pill.ms-anger-2 .ms-pill-bar-fill { background: #3b82f6 !important; }
+
+#mindshield-counter-pill.ms-anger-3 {
+  border-color: rgba(139, 92, 246, 0.4) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 15px rgba(139, 92, 246, 0.25) !important;
+}
+#mindshield-counter-pill.ms-anger-3 .ms-pill-mood-badge { color: #8b5cf6 !important; }
+#mindshield-counter-pill.ms-anger-3 .ms-pill-bar-fill { background: #8b5cf6 !important; }
+
+#mindshield-counter-pill.ms-anger-4 {
+  border-color: rgba(245, 158, 11, 0.5) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 15px rgba(245, 158, 11, 0.3) !important;
+}
+#mindshield-counter-pill.ms-anger-4 .ms-pill-mood-badge { color: #f59e0b !important; }
+#mindshield-counter-pill.ms-anger-4 .ms-pill-bar-fill { background: #f59e0b !important; }
+
+#mindshield-counter-pill.ms-anger-5 {
+  border-color: rgba(249, 115, 22, 0.55) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 18px rgba(249, 115, 22, 0.35) !important;
+}
+#mindshield-counter-pill.ms-anger-5 .ms-pill-mood-badge { color: #f97316 !important; }
+#mindshield-counter-pill.ms-anger-5 .ms-pill-bar-fill { background: #f97316 !important; }
+
+#mindshield-counter-pill.ms-anger-6 {
+  border-color: rgba(234, 88, 12, 0.6) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 20px rgba(234, 88, 12, 0.4) !important;
+}
+#mindshield-counter-pill.ms-anger-6 .ms-pill-mood-badge { color: #ea580c !important; }
+#mindshield-counter-pill.ms-anger-6 .ms-pill-bar-fill { background: #ea580c !important; }
+
+#mindshield-counter-pill.ms-anger-7 {
+  border-color: rgba(239, 68, 68, 0.65) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 22px rgba(239, 68, 68, 0.45) !important;
+  animation: msRageVibrate 0.6s infinite alternate !important;
+}
+#mindshield-counter-pill.ms-anger-7 .ms-pill-mood-badge { color: #ef4444 !important; }
+#mindshield-counter-pill.ms-anger-7 .ms-pill-bar-fill { background: #ef4444 !important; }
+
+#mindshield-counter-pill.ms-anger-8 {
+  border-color: rgba(220, 38, 38, 0.75) !important;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5), 0 0 26px rgba(220, 38, 38, 0.55) !important;
+  animation: msRageVibrate 0.4s infinite alternate !important;
+}
+#mindshield-counter-pill.ms-anger-8 .ms-pill-mood-badge { color: #dc2626 !important; }
+#mindshield-counter-pill.ms-anger-8 .ms-pill-bar-fill { background: #dc2626 !important; }
+
+#mindshield-counter-pill.ms-anger-9 {
+  border-color: rgba(185, 28, 28, 0.9) !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6), 0 0 30px rgba(185, 28, 28, 0.75) !important;
+  animation: msRageVibrate 0.25s infinite alternate !important;
+}
+#mindshield-counter-pill.ms-anger-9 .ms-pill-mood-badge { color: #f87171 !important; font-weight: 800 !important; }
+#mindshield-counter-pill.ms-anger-9 .ms-pill-bar-fill { background: #b91c1c !important; }
+
+/* Level 10: RAGE EXPLODED (রাগটা ফাইটে উঠবে!) */
+#mindshield-counter-pill.ms-anger-10 {
+  border-color: #ef4444 !important;
+  background: rgba(30, 10, 10, 0.96) !important;
+  animation: msVolcanoExplode 1.2s infinite ease-in-out !important;
+}
+#mindshield-counter-pill.ms-anger-10 .ms-pill-mood-badge { color: #fca5a5 !important; font-weight: 900 !important; }
+#mindshield-counter-pill.ms-anger-10 .ms-pill-bar-fill { background: linear-gradient(90deg, #f97316, #ef4444, #7f1d1d) !important; }
+
+/* Cooldown Mode */
+#mindshield-counter-pill.ms-anger-cooldown {
+  border-color: rgba(239, 68, 68, 0.6) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 20px rgba(239, 68, 68, 0.4) !important;
+}
+#mindshield-counter-pill.ms-anger-cooldown .ms-pill-mood-badge { color: #fca5a5 !important; }
+#mindshield-counter-pill.ms-anger-cooldown .ms-pill-bar-fill { background: #ef4444 !important; }
+
+@keyframes msRageVibrate {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(-1.5px) rotate(-1.5deg); }
+  100% { transform: translateX(1.5px) rotate(1.5deg); }
+}
+
+@keyframes msVolcanoExplode {
+  0% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.8), 0 0 35px rgba(249, 115, 22, 0.5); transform: scale(1); }
+  50% { box-shadow: 0 0 35px rgba(239, 68, 68, 1), 0 0 55px rgba(249, 115, 22, 0.8); transform: scale(1.05); }
+  100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.8), 0 0 35px rgba(249, 115, 22, 0.5); transform: scale(1); }
 }
 
 /* Matrix & Grid Question Formatting */

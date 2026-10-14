@@ -3,6 +3,7 @@
  */
 
 import { startSoundscape, stopSoundscape, isPlaying } from '../core/focus-soundscapes.js';
+import { getAngerMood } from '../core/anger-mood.js';
 
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60);
@@ -25,16 +26,42 @@ async function loadData() {
     document.getElementById('stat-challenges-today').textContent = stats.challengesSolvedToday || 0;
 
     // Session Progress
-    const reelLimit = config.reelLimit || 5;
+    const reelLimit = config.reelLimit || 10;
     const currentCount = state.reelCount || 0;
     document.getElementById('session-ratio').textContent = `${currentCount} / ${reelLimit}`;
 
-    const percent = Math.min(100, Math.round((currentCount / reelLimit) * 100));
-    document.getElementById('progress-fill').style.width = `${percent}%`;
+    // Dynamic Anger & Focus Avatar
+    const moodInfo = getAngerMood({
+      reelCount: currentCount,
+      reelLimit,
+      elapsedMinutes: res.elapsedMinutes || 0,
+      timeLimitMinutes: (config && config.timeLimitMinutes) || 15,
+      isBlocked: state.isBlocked,
+      isCooldown
+    });
+
+    const emojiEl = document.getElementById('popup-avatar-emoji');
+    const moodTitleEl = document.getElementById('popup-mood-title');
+    const moodBadgeEl = document.getElementById('popup-mood-badge');
+    const moodQuoteEl = document.getElementById('popup-mood-quote');
+
+    if (emojiEl) emojiEl.textContent = moodInfo.emoji;
+    if (moodTitleEl) moodTitleEl.textContent = moodInfo.bengali;
+    if (moodBadgeEl) {
+      moodBadgeEl.textContent = moodInfo.mood;
+      moodBadgeEl.style.color = moodInfo.color;
+    }
+    if (moodQuoteEl) moodQuoteEl.textContent = moodInfo.quote;
+
+    const fillEl = document.getElementById('progress-fill');
+    if (fillEl) {
+      fillEl.style.width = `${moodInfo.percent}%`;
+      fillEl.style.background = moodInfo.color;
+    }
 
     const remaining = Math.max(0, reelLimit - currentCount);
     const statusText = remaining > 0
-      ? `${remaining} reel${remaining > 1 ? 's' : ''} until brain interruption`
+      ? `${remaining} reel${remaining > 1 ? 's' : ''} left • ${res.elapsedMinutes || 0}m watched`
       : 'Limit reached! Brain challenge active';
     document.getElementById('session-status-text').textContent = statusText;
 

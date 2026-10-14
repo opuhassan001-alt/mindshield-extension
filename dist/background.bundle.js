@@ -961,7 +961,8 @@ class StateManager {
         isCooldown: false,
         reason: hitReelLimit ? 'reel_limit' : 'time_limit',
         reelCount: this.state.reelCount,
-        elapsedMinutes: Math.floor(elapsedMinutes)
+        elapsedMinutes: Math.floor(elapsedMinutes),
+        timeLimitMinutes: this.config.timeLimitMinutes || 15
       };
     }
 
@@ -969,7 +970,8 @@ class StateManager {
       isBlocked: false,
       isCooldown: false,
       reelCount: this.state.reelCount,
-      elapsedMinutes: Math.floor(elapsedMinutes)
+      elapsedMinutes: Math.floor(elapsedMinutes),
+      timeLimitMinutes: this.config.timeLimitMinutes || 15
     };
   }
 
@@ -978,6 +980,8 @@ class StateManager {
     if (cooldown.isCooldown) {
       return {
         reelCount: this.state.reelCount,
+        elapsedMinutes: 0,
+        timeLimitMinutes: this.config.timeLimitMinutes || 15,
         shouldBlock: true,
         isCooldown: true,
         remainingSeconds: cooldown.remainingSeconds
@@ -1001,6 +1005,8 @@ class StateManager {
 
     return {
       reelCount: this.state.reelCount,
+      elapsedMinutes: Math.floor(elapsedMinutes),
+      timeLimitMinutes: this.config.timeLimitMinutes || 15,
       shouldBlock,
       isCooldown: false,
       reason: hitReelLimit ? 'reel_limit' : hitTimeLimit ? 'time_limit' : null
@@ -1244,6 +1250,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
       case 'GET_POPUP_DATA': {
         const cooldown = await stateManager.checkCooldownStatus();
+        const sessionStatus = await stateManager.checkSessionStatus();
         const stats = await stateManager.getStats();
         const lastFailedChallenge = await stateManager.getLastFailedChallenge();
         state = await stateManager.getState();
@@ -1253,6 +1260,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           stats,
           isCooldown: cooldown.isCooldown,
           remainingSeconds: cooldown.remainingSeconds,
+          elapsedMinutes: sessionStatus.elapsedMinutes || 0,
+          timeLimitMinutes: config.timeLimitMinutes || 15,
           lastFailedChallenge
         });
       }

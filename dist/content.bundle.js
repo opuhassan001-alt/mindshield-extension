@@ -472,7 +472,7 @@
       root.innerHTML = [
         '<div class="ms-container">',
         '  <button class="ms-sound-toggle" id="ms-sound-toggle" title="Toggle Sound">' + soundIcon + '</button>',
-        '  <div class="ms-badge-header">⚡ ADHD Mind Interruption</div>',
+        '  <div class="ms-badge-header">🤯 রাগ ফাইটে উঠেছে! ⚡ ADHD Mind Interruption</div>',
         '  <h2 class="ms-title">' + challenge.title + '</h2>',
         '  <div class="ms-subtitle">' + subtitle + '</div>',
         '  <div class="ms-card">',
@@ -698,56 +698,160 @@
     }
   }
 
-  // --- 5. FLOATING LIVE STATUS PILL ---
+  // --- 5. ANGER MOOD & FOCUS AVATAR ENGINE ---
+  const ANGER_TIERS = [
+    { level: 0, emoji: '😇', mood: 'Zen Focus', bengali: 'শান্ত মেজাজ', quote: 'Fresh session. Be intentional!', color: '#10b981', className: 'ms-anger-0' },
+    { level: 1, emoji: '😎', mood: 'Chill (1st Reel)', bengali: 'মজার মেজাজ (১ম রিল)', quote: 'Just one reel! Enjoying responsibly.', color: '#06b6d4', className: 'ms-anger-1' },
+    { level: 2, emoji: '🤨', mood: 'Mild Suspicion', bengali: 'হালকা রাগ (২য় রিল)', quote: 'Hmm... watching another already?', color: '#3b82f6', className: 'ms-anger-2' },
+    { level: 3, emoji: '😒', mood: 'Unamused', bengali: 'আরও রাগ (৩য় রিল)', quote: '3 reels in. Dopamine spiral starting.', color: '#8b5cf6', className: 'ms-anger-3' },
+    { level: 4, emoji: '😠', mood: 'Irritated', bengali: 'আরও রাগ (৪র্থ রিল)', quote: 'Getting irritated! Put the phone down.', color: '#f59e0b', className: 'ms-anger-4' },
+    { level: 5, emoji: '😡', mood: 'Halfway Stern', bengali: 'গম্ভীর রাগ (অর্ধেক শেষ)', quote: '50% dopamine limit breached!', color: '#f97316', className: 'ms-anger-5' },
+    { level: 6, emoji: '😤', mood: 'Steaming Mad', bengali: 'ফুঁসছে রাগ (৬ষ্ঠ রিল)', quote: 'Steam from ears! Still scrolling?!', color: '#ea580c', className: 'ms-anger-6' },
+    { level: 7, emoji: '🤬', mood: 'Furious Guardian', bengali: 'মারাত্মক ক্ষিপ্ত (৭ম রিল)', quote: 'Why are you doing this to your brain?!', color: '#ef4444', className: 'ms-anger-7' },
+    { level: 8, emoji: '👿', mood: 'Danger Zone', bengali: 'চরম বিপদসীমা (৮ম রিল)', quote: 'Red alert! You are losing control.', color: '#dc2626', className: 'ms-anger-8' },
+    { level: 9, emoji: '💥', mood: 'Fuse Lit', bengali: 'বিস্ফোরণোন্মুখ (৯ম রিল)', quote: 'Final warning! NEXT REEL WILL LOCK!', color: '#b91c1c', className: 'ms-anger-9' },
+    { level: 10, emoji: '🤯', altEmoji: '🌋', mood: 'RAGE EXPLODED!', bengali: 'রাগ ফাইটে উঠেছে! (১০ম রিল/টাইম শেষ)', quote: 'BOOM! Dopamine limit destroyed. LOCK ENGAGED!', color: '#7f1d1d', className: 'ms-anger-10' }
+  ];
+
+  const COOLDOWN_TIER = {
+    level: -1,
+    emoji: '🛑',
+    mood: 'Detox Lockout',
+    bengali: 'ডোপামিন ডিটক্স মোড',
+    quote: 'Step away from the screen and breathe.',
+    color: '#ef4444',
+    className: 'ms-anger-cooldown'
+  };
+
+  function getAngerMood({ reelCount = 0, reelLimit = 10, elapsedMinutes = 0, timeLimitMinutes = 15, isBlocked = false, isCooldown = false }) {
+    if (isCooldown) {
+      return { ...COOLDOWN_TIER, percent: 100 };
+    }
+    const reelRatio = reelLimit > 0 ? (reelCount / reelLimit) : 0;
+    const timeRatio = timeLimitMinutes > 0 ? (elapsedMinutes / timeLimitMinutes) : 0;
+
+    if (isBlocked || (reelLimit > 0 && reelCount >= reelLimit) || (timeLimitMinutes > 0 && elapsedMinutes >= timeLimitMinutes)) {
+      return { ...ANGER_TIERS[10], percent: 100 };
+    }
+
+    const reelLevel = Math.min(10, Math.floor(reelCount));
+    const timeLevel = Math.min(10, Math.floor(timeRatio * 10));
+    const level = Math.min(10, Math.max(0, Math.max(reelLevel, timeLevel)));
+    const effectivePercent = Math.min(100, Math.round(Math.max(reelRatio, timeRatio) * 100));
+
+    return {
+      ...ANGER_TIERS[level],
+      percent: effectivePercent,
+      level
+    };
+  }
+
+  // --- 6. FLOATING LIVE STATUS PILL (DYNAMIC EMOJI ANGER BAR) ---
   class PillManager {
     constructor() {
       this.pill = null;
+      this.currentLevel = null;
+      this.isMinimized = false;
     }
 
     getOrCreate() {
       if (!this.pill || !document.body.contains(this.pill)) {
         this.pill = document.createElement('div');
         this.pill.id = 'mindshield-counter-pill';
+        this.pill.className = 'ms-pill ms-anger-0';
         this.pill.innerHTML = [
-          '<span>🛡️</span>',
-          '<span id="ms-pill-text">MindShield: <span class="ms-pill-badge" id="ms-pill-count">0 / 5</span> Reels</span>'
+          '<div class="ms-pill-avatar" id="ms-pill-avatar" title="Click to minimize/expand">',
+          '  <span class="ms-pill-emoji" id="ms-pill-emoji">😇</span>',
+          '</div>',
+          '<div class="ms-pill-body" id="ms-pill-body">',
+          '  <div class="ms-pill-header">',
+          '    <span class="ms-pill-mood-badge" id="ms-pill-mood">শান্ত মেজাজ</span>',
+          '    <span class="ms-pill-reels-count" id="ms-pill-count">0 / 10 Reels</span>',
+          '  </div>',
+          '  <div class="ms-pill-bar-track">',
+          '    <div class="ms-pill-bar-fill" id="ms-pill-fill" style="width: 0%;"></div>',
+          '  </div>',
+          '  <div class="ms-pill-sub-info" id="ms-pill-sub">⏱️ 0m / 15m • Fresh session</div>',
+          '</div>',
+          '<button type="button" class="ms-pill-toggle-btn" id="ms-pill-toggle" title="Minimize / Expand">◀</button>'
         ].join('');
+
+        const toggleBtn = this.pill.querySelector('#ms-pill-toggle');
+        const avatar = this.pill.querySelector('#ms-pill-avatar');
+        const toggleHandler = (e) => {
+          e.stopPropagation();
+          this.isMinimized = !this.isMinimized;
+          if (this.isMinimized) {
+            this.pill.classList.add('ms-minimized');
+            if (toggleBtn) toggleBtn.textContent = '▶';
+          } else {
+            this.pill.classList.remove('ms-minimized');
+            if (toggleBtn) toggleBtn.textContent = '◀';
+          }
+        };
+
+        if (toggleBtn) toggleBtn.addEventListener('click', toggleHandler);
+        if (avatar) avatar.addEventListener('click', toggleHandler);
+
         document.body.appendChild(this.pill);
       }
       return this.pill;
     }
 
-    update(count, limit, isBlocked = false, isCooldown = false) {
+    update({ reelCount = 0, limit = 10, elapsedMinutes = 0, timeLimitMinutes = 15, isBlocked = false, isCooldown = false }) {
       const el = this.getOrCreate();
+      const emojiEl = el.querySelector('#ms-pill-emoji');
+      const avatarEl = el.querySelector('#ms-pill-avatar');
+      const moodEl = el.querySelector('#ms-pill-mood');
       const countEl = el.querySelector('#ms-pill-count');
-      const textEl = el.querySelector('#ms-pill-text');
+      const fillEl = el.querySelector('#ms-pill-fill');
+      const subEl = el.querySelector('#ms-pill-sub');
 
-      el.classList.remove('warning', 'danger');
+      const moodInfo = getAngerMood({
+        reelCount,
+        reelLimit: limit,
+        elapsedMinutes,
+        timeLimitMinutes,
+        isBlocked,
+        isCooldown
+      });
 
-      if (isCooldown) {
-        el.classList.add('danger');
-        if (textEl) textEl.innerHTML = '🛑 Cooldown Lock Active';
-      } else if (isBlocked) {
-        el.classList.add('danger');
-        if (textEl) textEl.innerHTML = '🔒 Limit Reached! Solve Puzzle';
-      } else {
-        const remaining = Math.max(0, limit - count);
-        if (remaining <= 1) {
-          el.classList.add('warning');
+      for (let i = 0; i <= 10; i++) {
+        el.classList.remove('ms-anger-' + i);
+      }
+      el.classList.remove('ms-anger-cooldown');
+      el.classList.add(moodInfo.className);
+
+      if (this.currentLevel !== moodInfo.level) {
+        this.currentLevel = moodInfo.level;
+        if (avatarEl) {
+          avatarEl.classList.remove('pop');
+          void avatarEl.offsetWidth;
+          avatarEl.classList.add('pop');
         }
-        if (countEl) countEl.textContent = count + ' / ' + limit;
-        if (textEl) textEl.innerHTML = 'MindShield: <span class="ms-pill-badge" id="ms-pill-count">' + count + ' / ' + limit + '</span> Reels';
       }
 
-      el.classList.remove('pulse');
-      void el.offsetWidth;
-      el.classList.add('pulse');
+      if (emojiEl) emojiEl.textContent = moodInfo.emoji;
+      if (moodEl) moodEl.textContent = moodInfo.bengali;
+      if (fillEl) fillEl.style.width = moodInfo.percent + '%';
+
+      if (isCooldown) {
+        if (countEl) countEl.textContent = '🛑 Lockout';
+        if (subEl) subEl.textContent = 'ডোপামিন ডিটক্স মোড • Take a break';
+      } else if (isBlocked) {
+        if (countEl) countEl.textContent = '🔒 Limit Reached';
+        if (subEl) subEl.textContent = '💥 ' + moodInfo.quote;
+      } else {
+        if (countEl) countEl.textContent = reelCount + ' / ' + limit + ' Reels';
+        if (subEl) subEl.textContent = '⏱️ ' + elapsedMinutes + 'm / ' + timeLimitMinutes + 'm • ' + moodInfo.quote;
+      }
     }
 
     remove() {
       if (this.pill && this.pill.parentNode) {
         this.pill.parentNode.removeChild(this.pill);
         this.pill = null;
+        this.currentLevel = null;
       }
     }
   }
@@ -780,9 +884,17 @@
 
   function handleLock(res) {
     pauseAllMedia();
+    const timeLimit = (res.config && res.config.timeLimitMinutes) || 15;
 
     if (res.isCooldown) {
-      pillManager.update(res.reelCount || 0, currentReelLimit, true, true);
+      pillManager.update({
+        reelCount: res.reelCount || 0,
+        limit: currentReelLimit,
+        elapsedMinutes: res.elapsedMinutes || 0,
+        timeLimitMinutes: timeLimit,
+        isBlocked: true,
+        isCooldown: true
+      });
       overlayManager.showCooldown(res.remainingSeconds, () => {
         overlayManager.removeOverlay();
         checkCurrentStatus();
@@ -793,7 +905,14 @@
     currentChallenge = res.challenge;
     if (!currentChallenge) return;
 
-    pillManager.update(res.reelCount || currentReelLimit, currentReelLimit, true, false);
+    pillManager.update({
+      reelCount: res.reelCount || currentReelLimit,
+      limit: currentReelLimit,
+      elapsedMinutes: res.elapsedMinutes || timeLimit,
+      timeLimitMinutes: timeLimit,
+      isBlocked: true,
+      isCooldown: false
+    });
 
     overlayManager.showChallenge({
       challenge: currentChallenge,
@@ -814,7 +933,14 @@
             checkCurrentStatus();
           });
         } else if (response.cooldownTriggered) {
-          pillManager.update(0, currentReelLimit, true, true);
+          pillManager.update({
+            reelCount: 0,
+            limit: currentReelLimit,
+            elapsedMinutes: 0,
+            timeLimitMinutes: timeLimit,
+            isBlocked: true,
+            isCooldown: true
+          });
           overlayManager.showCooldown(response.remainingSeconds, () => {
             overlayManager.removeOverlay();
             checkCurrentStatus();
@@ -828,7 +954,14 @@
           action: 'START_COOLDOWN',
           failedChallenge: currentChallenge
         });
-        pillManager.update(0, currentReelLimit, true, true);
+        pillManager.update({
+          reelCount: 0,
+          limit: currentReelLimit,
+          elapsedMinutes: 0,
+          timeLimitMinutes: timeLimit,
+          isBlocked: true,
+          isCooldown: true
+        });
         overlayManager.showCooldown(response.remainingSeconds, () => {
           overlayManager.removeOverlay();
           checkCurrentStatus();
@@ -855,7 +988,15 @@
       currentReelLimit = res.config.reelLimit;
     }
 
-    pillManager.update(res.reelCount || 0, currentReelLimit, res.isBlocked, res.isCooldown);
+    const timeLimit = (res.config && res.config.timeLimitMinutes) || 15;
+    pillManager.update({
+      reelCount: res.reelCount || 0,
+      limit: currentReelLimit,
+      elapsedMinutes: res.elapsedMinutes || 0,
+      timeLimitMinutes: timeLimit,
+      isBlocked: res.isBlocked,
+      isCooldown: res.isCooldown
+    });
 
     if (res.isBlocked || res.isCooldown) {
       handleLock(res);
@@ -912,7 +1053,15 @@
       currentReelLimit = res.config.reelLimit;
     }
 
-    pillManager.update(res.reelCount, currentReelLimit, res.shouldBlock, res.isCooldown);
+    const timeLimit = (res.config && res.config.timeLimitMinutes) || 15;
+    pillManager.update({
+      reelCount: res.reelCount || 0,
+      limit: currentReelLimit,
+      elapsedMinutes: res.elapsedMinutes || 0,
+      timeLimitMinutes: timeLimit,
+      isBlocked: res.shouldBlock,
+      isCooldown: res.isCooldown
+    });
 
     if (res.shouldBlock || res.isCooldown) {
       handleLock(res);
