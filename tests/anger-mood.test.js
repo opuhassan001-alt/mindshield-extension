@@ -84,3 +84,4 @@ describe('Anger Mood Engine', () => {
     assert.strictEqual(mood.level, -1);
   });
 });
+

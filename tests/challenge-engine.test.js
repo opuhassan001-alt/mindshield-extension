@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { generateChallenge, verifyAnswer, CHALLENGE_TYPES } from '../src/core/challenge-engine.js';
+import { generateChallenge, verifyAnswer, getChallengeSignature, CHALLENGE_TYPES } from '../src/core/challenge-engine.js';
 
 describe('Challenge Engine', () => {
   it('should list available challenge types including logic and matrix', () => {
@@ -138,6 +138,46 @@ describe('Challenge Engine', () => {
       assert.ok(challenge.question);
       assert.ok(challenge.answer !== undefined);
       assert.ok(challenge.explanation);
+    });
+  });
+
+  describe('Anti-Repetition & Deduplication Engine', () => {
+    it('should produce a non-empty signature for every challenge', () => {
+      const challenge = generateChallenge('iba_bcs', 'insane');
+      const sig = getChallengeSignature(challenge);
+      assert.ok(sig && sig.length > 5);
+      assert.equal(challenge.signature, sig);
+    });
+
+    it('should avoid generating questions matching recentSignatures', () => {
+      const c1 = generateChallenge('iba_bcs', 'insane');
+      const recent = [c1.signature];
+      // Generate multiple times and ensure it avoids matching the signature in recent list
+      for (let i = 0; i < 5; i++) {
+        const c2 = generateChallenge('iba_bcs', 'insane', recent);
+        assert.notEqual(c2.signature, c1.signature);
+      }
+    });
+  });
+
+  describe('Smart Unit-Tolerant Answer Verification', () => {
+    it('should accept exact text matches', () => {
+      assert.equal(verifyAnswer({ answer: 'Thursday' }, 'Thursday'), true);
+      assert.equal(verifyAnswer({ answer: 'Thursday' }, 'thursday'), true);
+      assert.equal(verifyAnswer({ answer: '40 km/h' }, '40 km/h'), true);
+    });
+
+    it('should accept numeric answers with or without units', () => {
+      assert.equal(verifyAnswer({ answer: '40 km/h' }, '40'), true);
+      assert.equal(verifyAnswer({ answer: '12 seconds' }, '12'), true);
+      assert.equal(verifyAnswer({ answer: '130°' }, '130'), true);
+      assert.equal(verifyAnswer({ answer: '10' }, '10 days'), true);
+    });
+
+    it('should reject incorrect answers', () => {
+      assert.equal(verifyAnswer({ answer: '40 km/h' }, '50'), false);
+      assert.equal(verifyAnswer({ answer: 'Thursday' }, 'Friday'), false);
+      assert.equal(verifyAnswer({ answer: '4' }, 'invalid'), false);
     });
   });
 });

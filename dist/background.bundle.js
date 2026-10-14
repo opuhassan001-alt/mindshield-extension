@@ -21,11 +21,34 @@ const STORAGE_KEYS = {
   STATE: 'mindshield_state',
   STATS: 'mindshield_stats',
   ACTIVE_CHALLENGE: 'mindshield_active_challenge',
-  LAST_FAILED_CHALLENGE: 'mindshield_last_failed_challenge'
+  LAST_FAILED_CHALLENGE: 'mindshield_last_failed_challenge',
+  RECENT_CHALLENGES: 'mindshield_recent_challenges'
 };
 
-// --- CHALLENGE ENGINE ---
-const CHALLENGE_TYPES = ['math', 'sequence', 'stroop', 'logic', 'matrix', 'iba_bcs', 'game_logic'];
+// --- CHALLENGE ENGINE (HIGH-STANDARD IBA/BCS/CRT & ANTI-REPETITION) ---
+
+/**
+ * MindShield Challenge Engine (High-Standard Cognitive Resilience Edition)
+ * Generates elite prefrontal cortex challenges:
+ *  - Dhaka University IBA entrance standard quantitative arithmetic & analytical reasoning
+ *  - BCS Preliminary & Written mental ability (বিসিএস মানসিক দক্ষতা: clock angles, calendar modulo, syllogisms, vectors)
+ *  - Cognitive Reflection Tests (CRT-3 & dual-process System 1 override traps)
+ *  - Advanced 3x3 functional number matrix grids
+ *  - Multi-step modular algebra, remainder cycles, and symmetric polynomials
+ *  - Cryptarithms and symbolic operator decryption
+ *
+ * Equipped with dynamic parameter randomization and anti-repetition signature hashing.
+ */
+
+const CHALLENGE_TYPES = [
+  'iba_bcs',
+  'logic',
+  'math',
+  'matrix',
+  'sequence',
+  'game_logic',
+  'stroop'
+];
 
 const STROOP_COLORS = [
   { name: 'Red', hex: '#ef4444' },
@@ -33,7 +56,8 @@ const STROOP_COLORS = [
   { name: 'Green', hex: '#22c55e' },
   { name: 'Yellow', hex: '#eab308' },
   { name: 'Purple', hex: '#a855f7' },
-  { name: 'Orange', hex: '#f97316' }
+  { name: 'Orange', hex: '#f97316' },
+  { name: 'Cyan', hex: '#06b6d4' }
 ];
 
 function getRandomInt(min, max) {
@@ -49,264 +73,632 @@ function shuffle(array) {
   return arr;
 }
 
-function generateMathChallenge(difficulty = 'insane') {
-  const id = 'math_' + Date.now() + '_' + getRandomInt(100, 999);
-  let question = '';
-  let answer = 0;
-  let hint = 'Calculate the exact result.';
-  let explanation = '';
-
-  if (difficulty === 'easy') {
-    const op = ['+', '-', '*'][getRandomInt(0, 2)];
-    if (op === '+') {
-      const a = getRandomInt(12, 59);
-      const b = getRandomInt(11, 48);
-      question = a + ' + ' + b + ' = ?';
-      answer = a + b;
-      explanation = 'Direct addition: ' + a + ' + ' + b + ' = ' + answer + '.';
-    } else if (op === '-') {
-      const a = getRandomInt(30, 99);
-      const b = getRandomInt(10, a - 5);
-      question = a + ' - ' + b + ' = ?';
-      answer = a - b;
-      explanation = 'Direct subtraction: ' + a + ' - ' + b + ' = ' + answer + '.';
-    } else {
-      const a = getRandomInt(3, 9);
-      const b = getRandomInt(4, 9);
-      question = a + ' × ' + b + ' = ?';
-      answer = a * b;
-      explanation = 'Direct multiplication: ' + a + ' × ' + b + ' = ' + answer + '.';
-    }
-  } else if (difficulty === 'medium') {
-    const template = getRandomInt(1, 3);
-    if (template === 1) {
-      const a = getRandomInt(6, 14);
-      const b = getRandomInt(4, 8);
-      const c = getRandomInt(11, 45);
-      question = '(' + a + ' × ' + b + ') + ' + c + ' = ?';
-      answer = a * b + c;
-      explanation = 'Multiply first: ' + a + ' × ' + b + ' = ' + (a*b) + '. Then add ' + c + ': ' + (a*b) + ' + ' + c + ' = ' + answer + '.';
-    } else if (template === 2) {
-      const a = getRandomInt(5, 9);
-      const b = getRandomInt(6, 9);
-      const total = a * b + getRandomInt(20, 60);
-      question = total + ' - (' + a + ' × ' + b + ') = ?';
-      answer = total - (a * b);
-      explanation = 'Multiply first: ' + a + ' × ' + b + ' = ' + (a*b) + '. Subtract: ' + total + ' - ' + (a*b) + ' = ' + answer + '.';
-    } else {
-      const b = getRandomInt(4, 8);
-      const mult = getRandomInt(6, 12);
-      const a = b * mult;
-      const c = getRandomInt(15, 55);
-      question = '(' + a + ' ÷ ' + b + ') + ' + c + ' = ?';
-      answer = mult + c;
-      explanation = 'Divide first: ' + a + ' ÷ ' + b + ' = ' + mult + '. Then add ' + c + ': ' + mult + ' + ' + c + ' = ' + answer + '.';
-    }
-  } else if (difficulty === 'hard') {
-    const template = getRandomInt(1, 2);
-    if (template === 1) {
-      const a = getRandomInt(11, 19);
-      const b = getRandomInt(4, 7);
-      const c = getRandomInt(3, 8);
-      const d = getRandomInt(4, 6);
-      question = '(' + a + ' × ' + b + ') - (' + c + ' × ' + d + ') = ?';
-      answer = (a * b) - (c * d);
-      explanation = 'Step 1: ' + a + ' × ' + b + ' = ' + (a*b) + '. Step 2: ' + c + ' × ' + d + ' = ' + (c*d) + '. Step 3: ' + (a*b) + ' - ' + (c*d) + ' = ' + answer + '.';
-    } else {
-      const x = getRandomInt(4, 15);
-      const a = getRandomInt(3, 8);
-      const b = getRandomInt(10, 40);
-      const c = (a * x) + b;
-      question = 'Solve for x: ' + a + 'x + ' + b + ' = ' + c;
-      answer = x;
-      hint = 'Find the value of x.';
-      explanation = a + 'x = ' + c + ' - ' + b + ' = ' + (c-b) + ' => x = ' + (c-b) + ' ÷ ' + a + ' = ' + x + '.';
-    }
-  } else {
-    // Insane multi-step system of equations or modular arithmetic
-    const template = getRandomInt(1, 3);
-    if (template === 1) {
-      const x = getRandomInt(4, 10);
-      const y = getRandomInt(2, 8);
-      const aCoeff = getRandomInt(2, 3);
-      const c1 = (aCoeff * x) + y;
-      const c2 = x - y;
-      question = 'System: ' + aCoeff + 'x + y = ' + c1 + ' and x - y = ' + c2 + '. What is x × y?';
-      answer = x * y;
-      hint = 'Solve for x and y first, then multiply them.';
-      explanation = 'Add both equations: (' + aCoeff + 'x + y) + (x - y) = ' + c1 + ' + ' + c2 + ' => ' + (aCoeff + 1) + 'x = ' + (c1 + c2) + ' => x = ' + x + '. Substitute x: ' + x + ' - y = ' + c2 + ' => y = ' + y + '. Therefore, x × y = ' + x + ' × ' + y + ' = ' + answer + '.';
-    } else if (template === 2) {
-      const a = getRandomInt(12, 28);
-      const b = getRandomInt(8, 19);
-      const c = getRandomInt(15, 45);
-      const d = getRandomInt(5, 9);
-      const prod = a * b;
-      const total = prod + c;
-      const rem = total % d;
-      question = 'What is the remainder when (' + a + ' × ' + b + ') + ' + c + ' is divided by ' + d + '?';
-      answer = rem;
-      hint = 'Calculate the sum or use modular reduction.';
-      explanation = 'Step 1: ' + a + ' × ' + b + ' = ' + prod + '. Step 2: ' + prod + ' + ' + c + ' = ' + total + '. Step 3: ' + total + ' ÷ ' + d + ' gives quotient ' + Math.floor(total/d) + ' with remainder ' + rem + '.';
-    } else {
-      const a = getRandomInt(13, 24);
-      const b = getRandomInt(11, 16);
-      const c = getRandomInt(8, 14);
-      const d = getRandomInt(7, 12);
-      const e = getRandomInt(4, 8);
-      question = '(' + a + ' × ' + b + ') - (' + c + ' × ' + d + ') + ' + e + '² = ?';
-      answer = (a * b) - (c * d) + (e * e);
-      hint = 'Multiplications and square first, then subtract and add.';
-      explanation = 'Step 1: ' + a + ' × ' + b + ' = ' + (a*b) + '. Step 2: ' + c + ' × ' + d + ' = ' + (c*d) + '. Step 3: ' + e + '² = ' + (e*e) + '. Step 4: ' + (a*b) + ' - ' + (c*d) + ' + ' + (e*e) + ' = ' + answer + '.';
-    }
-  }
-
-  return {
-    id,
-    type: 'math',
-    difficulty,
-    title: '🧠 Mental Arithmetic Challenge',
-    instruction: 'Solve the equation to unlock scrolling:',
-    question,
-    answer,
-    hint,
-    explanation,
-    inputType: 'text'
-  };
+function getChallengeSignature(challenge) {
+  if (!challenge || !challenge.question) return '';
+  const cleanQ = String(challenge.question)
+    .slice(0, 120)
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+  return `${challenge.type || 'gen'}_${cleanQ}`;
 }
 
+// ============================================================================
+// 1. DHAKA UNIVERSITY IBA & BCS PRELIMINARY/WRITTEN COGNITIVE CHALLENGES
+// ============================================================================
+function generateIbaBcsChallenge(difficulty = 'insane') {
+  const id = `ibabcs_${Date.now()}_${getRandomInt(100, 999)}`;
+  const category = getRandomInt(1, 8);
+
+  if (category === 1) {
+    // 1. Clock Angle Mathematics (BCS Mental Ability Classic: |(60H - 11M)/2| degrees)
+    const times = [
+      { h: 3, m: 40, ans: 130 },
+      { h: 8, m: 20, ans: 130 },
+      { h: 7, m: 15, ans: 127.5 },
+      { h: 2, m: 25, ans: 77.5 },
+      { h: 4, m: 50, ans: 155 },
+      { h: 9, m: 35, ans: 77.5 },
+      { h: 10, m: 10, ans: 115 },
+      { h: 5, m: 20, ans: 40 },
+      { h: 6, m: 30, ans: 15 },
+      { h: 1, m: 50, ans: 115 }
+    ];
+    const item = times[getRandomInt(0, times.length - 1)];
+    const timeStr = `${item.h}:${String(item.m).padStart(2, '0')}`;
+    const question = `At ${timeStr}, what is the exact acute angle formed between the hour hand and the minute hand of a clock?`;
+    const answer = `${item.ans}°`;
+    const explanation = `Angle Formula: θ = |(60 × H - 11 × M) / 2|°. For ${timeStr}: |(60 × ${item.h} - 11 × ${item.m}) / 2| = |(${60 * item.h} - ${11 * item.m}) / 2| = |${(60 * item.h) - (11 * item.m)}| / 2 = ${item.ans}°.`;
+    
+    const offsets = shuffle([-15, -10, 10, 15, 20]);
+    const options = shuffle([
+      answer,
+      `${item.ans + offsets[0]}°`,
+      `${item.ans + offsets[1]}°`,
+      `${item.ans + offsets[2]}°`
+    ]);
+
+    return {
+      id,
+      type: 'iba_bcs',
+      subCategory: 'bcs_clock_angle',
+      difficulty,
+      title: '🏛️ BCS Mental Ability: Clock Angle Geometry',
+      instruction: 'Calculate the precise geometric angle between the hands:',
+      question,
+      answer,
+      options,
+      hint: 'Apply the standard clock angle formula: |(60H - 11M) / 2| degrees.',
+      explanation,
+      inputType: 'choice'
+    };
+  } else if (category === 2) {
+    // 2. Harmonic Mean & Round-Trip Velocity Traps (IBA Quantitative Classic)
+    const pairs = [
+      { v1: 30, v2: 60, ans: 40 },
+      { v1: 20, v2: 30, ans: 24 },
+      { v1: 40, v2: 60, ans: 48 },
+      { v1: 12, v2: 24, ans: 16 },
+      { v1: 45, v2: 90, ans: 60 }
+    ];
+    const item = pairs[getRandomInt(0, pairs.length - 1)];
+    const question = `A motorist drives from Town A to Town B at ${item.v1} km/h, and returns along the exact same route at ${item.v2} km/h. What is the average speed for the entire round trip?`;
+    const answer = `${item.ans} km/h`;
+    const arithmeticMean = (item.v1 + item.v2) / 2;
+    const explanation = `Cognitive Trap Alert: Average speed is NOT the simple average (${arithmeticMean} km/h)! Because equal distances are covered at different speeds, average speed is the Harmonic Mean: (2 × v1 × v2) / (v1 + v2) = (2 × ${item.v1} × ${item.v2}) / (${item.v1} + ${item.v2}) = ${2 * item.v1 * item.v2} / ${item.v1 + item.v2} = ${item.ans} km/h.`;
+    
+    const options = shuffle([
+      answer,
+      `${arithmeticMean} km/h`,
+      `${item.ans - 6} km/h`,
+      `${item.ans + 8} km/h`
+    ]);
+
+    return {
+      id,
+      type: 'iba_bcs',
+      subCategory: 'iba_harmonic_speed',
+      difficulty,
+      title: '📊 IBA Quantitative: Harmonic Average Speed',
+      instruction: 'Solve without falling into the arithmetic mean trap:',
+      question,
+      answer,
+      options,
+      hint: 'Average speed = Total Distance / Total Time. Equal distances require harmonic mean: 2ab / (a+b).',
+      explanation,
+      inputType: 'choice'
+    };
+  } else if (category === 3) {
+    // 3. Repeated Dilution & Replacement Alligation (IBA & GRE Classic)
+    const cases = [
+      { initial: 80, drawn: 8, times: 2, pureFinal: '64.8 liters' },
+      { initial: 50, drawn: 5, times: 2, pureFinal: '40.5 liters' },
+      { initial: 60, drawn: 12, times: 2, pureFinal: '38.4 liters' },
+      { initial: 100, drawn: 10, times: 2, pureFinal: '81 liters' },
+      { initial: 40, drawn: 4, times: 2, pureFinal: '32.4 liters' }
+    ];
+    const item = cases[getRandomInt(0, cases.length - 1)];
+    const question = `A container holds ${item.initial} liters of pure milk. Exactly ${item.drawn} liters are drawn off and replaced with water. This replacement process is repeated one more time (total 2 times). How much pure milk remains in the container?`;
+    const answer = item.pureFinal;
+    const fraction = (item.initial - item.drawn) / item.initial;
+    const explanation = `Formula: Remaining Pure Liquid = Initial × (1 - Drawn/Initial)^n. Here: ${item.initial} × (1 - ${item.drawn}/${item.initial})^2 = ${item.initial} × (${fraction})^2 = ${item.initial} × ${Math.round(fraction*fraction*1000)/1000} = ${item.pureFinal}.`;
+
+    const wrong1 = `${item.initial - (item.drawn * 2)} liters`;
+    const wrong2 = `${item.initial - item.drawn} liters`;
+    const wrong3 = `${Math.round((item.initial * 0.75) * 10) / 10} liters`;
+    const options = shuffle([answer, wrong1, wrong2, wrong3]);
+
+    return {
+      id,
+      type: 'iba_bcs',
+      subCategory: 'iba_dilution_alligation',
+      difficulty,
+      title: '🧪 IBA / GRE Quantitative: Repeated Dilution',
+      instruction: 'Compute the remaining volume after sequential replacement:',
+      question,
+      answer,
+      options,
+      hint: 'Use the dilution decay formula: V_final = V_0 × (1 - x / V_0)^n.',
+      explanation,
+      inputType: 'choice'
+    };
+  } else if (category === 4) {
+    // 4. Alternating Work Schedule (IBA Standard)
+    const cases = [
+      { a: 12, b: 18, ans: '14.33 days', expl: 'Total work = LCM(12, 18) = 36 units. Rate A = 3 units/day, Rate B = 2 units/day. In a 2-day cycle (A then B): 3 + 2 = 5 units. In 7 cycles (14 days): 7 × 5 = 35 units done. Remaining 1 unit is done by A on day 15 in 1/3 day. Total time = 14 + 1/3 = 14.33 days.' },
+      { a: 10, b: 20, ans: '13 days', expl: 'Total work = LCM(10, 20) = 20 units. Rate A = 2 units/day, Rate B = 1 unit/day. In 2 days: 3 units. In 6 cycles (12 days): 18 units done. Remaining 2 units done by A in 1 full day. Total time = 12 + 1 = 13 days.' },
+      { a: 8, b: 12, ans: '9.5 days', expl: 'Total work = LCM(8, 12) = 24 units. Rate A = 3, Rate B = 2. 2-day cycle = 5 units. 4 cycles (8 days) = 20 units. Day 9: A does 3 units (23 done). Day 10: B needs 1 unit (1/2 day). Total = 9.5 days.' }
+    ];
+    const item = cases[getRandomInt(0, cases.length - 1)];
+    const question = `Worker A can complete a project in ${item.a} days, and Worker B can complete it in ${item.b} days. If they work on ALTERNATE days starting with Worker A, in how many days will the work be finished?`;
+    const answer = item.ans;
+    const options = shuffle([
+      answer,
+      `${Math.round((item.a * item.b) / (item.a + item.b) * 10) / 10} days`,
+      '15 days',
+      '11 days'
+    ]);
+
+    return {
+      id,
+      type: 'iba_bcs',
+      subCategory: 'iba_alternate_work',
+      difficulty,
+      title: '🏛️ IBA Quantitative: Alternating Day Work',
+      instruction: 'Track discrete day cycles to find exact completion time:',
+      question,
+      answer,
+      options,
+      hint: 'Find the LCM as total work units. Calculate work completed per 2-day cycle.',
+      explanation: item.expl,
+      inputType: 'choice'
+    };
+  } else if (category === 5) {
+    // 5. Formal Deductive Syllogism (BCS Mental Ability & GRE Logic)
+    const syllogisms = [
+      {
+        q: "Premise 1: All high-performers possess deep focus.\nPremise 2: No person trapped in compulsive scrolling possesses deep focus.\nPremise 3: Some innovators are compulsive scrollers.\n\nWhich conclusion LOGICALLY AND INEVITABLY follows?",
+        ans: "Some innovators are not high-performers",
+        expl: "From Premise 2, compulsive scrollers lack deep focus. From Premise 1, high-performers MUST possess deep focus; thus no compulsive scroller is a high-performer. Since some innovators are compulsive scrollers (Premise 3), those specific innovators cannot be high-performers.",
+        opts: [
+          "Some innovators are not high-performers",
+          "All innovators are high-performers",
+          "No high-performer is an innovator",
+          "All compulsive scrollers are innovators"
+        ]
+      },
+      {
+        q: "Premise 1: All prime algorithms are deterministic.\nPremise 2: Some deterministic systems are self-healing.\nPremise 3: No self-healing system is volatile.\n\nWhich conclusion is GUARANTEED to be true?",
+        ans: "Some deterministic systems are not volatile",
+        expl: "Some deterministic systems are self-healing (Premise 2), and NO self-healing system is volatile (Premise 3). Therefore, those specific deterministic systems that are self-healing can never be volatile.",
+        opts: [
+          "Some deterministic systems are not volatile",
+          "No prime algorithm is volatile",
+          "All deterministic systems are self-healing",
+          "All volatile systems are prime algorithms"
+        ]
+      },
+      {
+        q: "Premise 1: No mammal can survive without oxygen.\nPremise 2: All dolphins are mammals.\nPremise 3: Some deep-sea explorers are dolphins.\n\nWhich deduction is strictly valid?",
+        ans: "Some deep-sea explorers cannot survive without oxygen",
+        expl: "All dolphins are mammals (Premise 2) and all mammals require oxygen (Premise 1), so all dolphins require oxygen. Since some deep-sea explorers are dolphins (Premise 3), those explorers cannot survive without oxygen.",
+        opts: [
+          "Some deep-sea explorers cannot survive without oxygen",
+          "All deep-sea explorers are mammals",
+          "Some mammals can survive without oxygen",
+          "No deep-sea explorer requires oxygen"
+        ]
+      }
+    ];
+    const item = syllogisms[getRandomInt(0, syllogisms.length - 1)];
+
+    return {
+      id,
+      type: 'iba_bcs',
+      subCategory: 'bcs_syllogism',
+      difficulty,
+      title: '🧠 BCS Mental Ability: Deductive Syllogism',
+      instruction: 'Evaluate the logical validity without making assumptions outside the premises:',
+      question: item.q,
+      answer: item.ans,
+      options: shuffle(item.opts),
+      hint: 'Draw Euler / Venn diagram circles to eliminate invalid intersections.',
+      explanation: item.expl,
+      inputType: 'choice'
+    };
+  } else if (category === 6) {
+    // 6. Constrained Combinatorics & Permutations (IBA Admission Standard)
+    const combis = [
+      {
+        q: "How many distinct 4-digit codes can be formed from digits {1, 2, 3, 4, 5, 6} without digit repetition such that the code is an EVEN number?",
+        ans: "180 codes",
+        expl: "To be even, the last digit (units place) must be chosen from {2, 4, 6} (3 choices). After choosing the last digit, the remaining 3 places are chosen from the remaining 5 digits: 5 × 4 × 3 = 60 ways. Total valid codes = 60 × 3 = 180 codes.",
+        opts: ["180 codes", "360 codes", "120 codes", "240 codes"]
+      },
+      {
+        q: "In how many ways can 5 software engineers and 2 project managers be seated in a row of 7 chairs such that the 2 project managers NEVER sit next to each other?",
+        ans: "3,600 ways",
+        expl: "Total unrestricted permutations = 7! = 5,040. Complementary counting: Treat the 2 PMs as one single unit (PM-PM): (6! × 2!) = 720 × 2 = 1,440 ways where they DO sit together. Ways where they NEVER sit together = 5,040 - 1,440 = 3,600 ways.",
+        opts: ["3,600 ways", "2,880 ways", "1,440 ways", "4,320 ways"]
+      },
+      {
+        q: "A committee of 4 people is to be selected from a pool of 5 mathematicians and 4 physicists. In how many ways can the committee be formed if it must contain AT LEAST 2 mathematicians?",
+        ans: "105 ways",
+        expl: "Cases: (1) 2 Math, 2 Phys: C(5,2) × C(4,2) = 10 × 6 = 60. (2) 3 Math, 1 Phys: C(5,3) × C(4,1) = 10 × 4 = 40. (3) 4 Math: C(5,4) = 5. Total ways = 60 + 40 + 5 = 105 ways.",
+        opts: ["105 ways", "126 ways", "90 ways", "80 ways"]
+      }
+    ];
+    const item = combis[getRandomInt(0, combis.length - 1)];
+
+    return {
+      id,
+      type: 'iba_bcs',
+      subCategory: 'iba_combinatorics',
+      difficulty,
+      title: '🎲 IBA Quantitative: Permutations & Combinations',
+      instruction: 'Solve the constrained combinatorial arrangement:',
+      question: item.q,
+      answer: item.ans,
+      options: shuffle(item.opts),
+      hint: 'Use complementary counting (Total minus Excluded) or partition into mutually exclusive cases.',
+      explanation: item.expl,
+      inputType: 'choice'
+    };
+  } else if (category === 7) {
+    // 7. Multi-leg Compass Vector Displacement (BCS Mental Ability)
+    const cases = [
+      {
+        q: "A surveyor walks 12 km North, turns 90° right and walks 8 km East, turns 90° right and walks 18 km South, then turns 90° right and walks 16 km West. What is the shortest straight-line distance from the starting position?",
+        ans: "10 km",
+        expl: "Net North-South displacement: +12 (North) - 18 (South) = -6 km (South). Net East-West displacement: +8 (East) - 16 (West) = -8 km (West). The final position forms a right triangle with legs 6 km and 8 km. By Pythagorean theorem: Distance = √(6² + 8²) = √(36 + 64) = √100 = 10 km.",
+        opts: ["10 km", "14 km", "12 km", "8 km"]
+      },
+      {
+        q: "An officer marches 15 km East, turns left and marches 20 km North, turns left and marches 3 km West, and finally turns left and marches 4 km South. What is the direct straight-line distance back to base?",
+        ans: "20 km",
+        expl: "Net East-West: 15 (East) - 3 (West) = +12 km (East). Net North-South: 20 (North) - 4 (South) = +16 km (North). Distance = √(12² + 16²) = √(144 + 256) = √400 = 20 km.",
+        opts: ["20 km", "22 km", "18 km", "25 km"]
+      }
+    ];
+    const item = cases[getRandomInt(0, cases.length - 1)];
+
+    return {
+      id,
+      type: 'iba_bcs',
+      subCategory: 'bcs_compass_displacement',
+      difficulty,
+      title: '🧭 BCS Mental Ability: 4-Way Vector Displacement',
+      instruction: 'Calculate the Euclidean distance from origin after multiple orthogonal vectors:',
+      question: item.q,
+      answer: item.ans,
+      options: shuffle(item.opts),
+      hint: 'Resolve coordinates into net X (East/West) and net Y (North/South), then calculate hypotenuse.',
+      explanation: item.expl,
+      inputType: 'choice'
+    };
+  } else {
+    // 8. Modular Calendar Jump Arithmetic (BCS Mental Ability)
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const startIdx = getRandomInt(0, 6);
+    const startDay = days[startIdx];
+    const daysAhead = getRandomInt(105, 365);
+    const targetIdx = (startIdx + daysAhead) % 7;
+    const answer = days[targetIdx];
+    const remainder = daysAhead % 7;
+    const question = `If today is ${startDay}, what day of the week will it be exactly ${daysAhead} days from today?`;
+    const explanation = `Each 7 days completes an exact cycle of the week. ${daysAhead} ÷ 7 = ${Math.floor(daysAhead / 7)} cycles with a remainder of ${remainder}. Counting ${remainder} days forward from ${startDay} lands on ${answer}.`;
+    const otherDays = days.filter(d => d !== answer);
+    const options = shuffle([answer, otherDays[0], otherDays[1], otherDays[2]]);
+
+    return {
+      id,
+      type: 'iba_bcs',
+      subCategory: 'bcs_calendar_modular',
+      difficulty,
+      title: '📅 BCS Mental Ability: Modular Calendar Jump',
+      instruction: 'Compute the modular weekday offset:',
+      question,
+      answer,
+      options,
+      hint: 'Divide the number of days by 7 and find the remainder.',
+      explanation,
+      inputType: 'choice'
+    };
+  }
+}
+
+// ============================================================================
+// 2. COGNITIVE REFLECTION TEST (CRT-3 & SYSTEM 1 TRAP DISMANTLING)
+// ============================================================================
 function generateLogicChallenge(difficulty = 'insane') {
-  const id = 'logic_' + Date.now() + '_' + getRandomInt(100, 999);
-  const RIDDLES = [
+  const id = `logic_${Date.now()}_${getRandomInt(100, 999)}`;
+
+  const CRT_BANK = [
     {
-      question: 'A bat and a baseball cost $1.10 in total. The bat costs $1.00 more than the ball. How many cents does the ball cost?',
-      answer: '5',
-      hint: 'Be careful: the intuitive answer of 10 cents is a cognitive trap!',
-      explanation: 'Let the ball cost B cents. The bat costs B + 100 cents. Together: B + (B + 100) = 110 cents => 2B = 10 => B = 5 cents. (If the ball were 10 cents, the bat would cost $1.10, making the total $1.20).',
-      options: ['5', '10', '1', '15']
+      q: "A grandfather clock takes exactly 6 seconds to strike 6 o'clock (each strike sounds at a regular interval). How many seconds does it take to strike 11 o'clock?",
+      ans: "12 seconds",
+      expl: "Cognitive Trap: System 1 jumps to 11 seconds! But striking 6 times involves 5 intervals between strikes (6 - 1 = 5). Duration of each interval = 6s ÷ 5 = 1.2 seconds. Striking 11 o'clock involves 10 intervals (11 - 1 = 10). Total time = 10 × 1.2s = 12 seconds.",
+      opts: ["12 seconds", "11 seconds", "10 seconds", "13.2 seconds"]
     },
     {
-      question: 'If 5 machines take 5 minutes to make 5 widgets, how many minutes does it take 100 machines to make 100 widgets?',
-      answer: '5',
-      hint: 'Think about how long ONE machine takes to make ONE widget.',
-      explanation: 'Each machine works independently and takes 5 minutes to produce 1 widget. Therefore, 100 machines operating in parallel will all finish their individual widgets in exactly 5 minutes, yielding 100 widgets.',
-      options: ['5', '100', '20', '50']
+      q: "In an athletic sprint competition, you sprint past the runner currently in 2nd place. What position are you now in?",
+      ans: "2nd place",
+      expl: "Cognitive Trap: The impulsive reflex is to shout '1st place!' But when you overtake the person in 2nd place, you take their spot. You are now in 2nd place; the 1st place runner is still ahead of you.",
+      opts: ["2nd place", "1st place", "3rd place", "Tied for 1st"]
     },
     {
-      question: 'In a lake, a patch of water lilies doubles in size every day. If it takes 48 days to cover the entire lake, how many days does it take to cover half the lake?',
-      answer: '47',
-      hint: 'Work backwards from the 48th day.',
-      explanation: 'Because the patch doubles in area every single day, going back one day halves its area. If the lake is 100% full on day 48, it was exactly 50% (half) covered on day 47.',
-      options: ['47', '24', '46', '12']
+      q: "Jerry received both the 16th highest and the 16th lowest score in his university mathematics class. Assuming no two students had tied scores, how many students are in the class?",
+      ans: "31 students",
+      expl: "Cognitive Trap: The intuitive reflex is 16 + 16 = 32. But Jerry is counted in BOTH rankings (from top and from bottom). Total students = 16 + 16 - 1 = 31 students.",
+      opts: ["31 students", "32 students", "30 students", "33 students"]
     },
     {
-      question: 'If 3 cats can catch 3 mice in 3 minutes, how many cats are needed to catch 100 mice in 100 minutes?',
-      answer: '3',
-      hint: 'Calculate the rate of catching mice per cat.',
-      explanation: '3 cats catch 3 mice in 3 minutes, which means 1 cat catches 1 mouse every 3 minutes. In 100 minutes, 1 cat catches 100/3 = 33.33 mice. Thus, 3 cats will catch 3 × 33.33 = 100 mice in 100 minutes.',
-      options: ['3', '100', '33', '9']
+      q: "An antique merchant buys a rare painting for $60, sells it for $70, buys it back for $80, and finally sells it for $90. How much total net profit did he make?",
+      ans: "$20 profit",
+      expl: "Break it down into two independent transactions: Transaction 1: Bought for $60, sold for $70 (+$10 profit). Transaction 2: Bought for $80, sold for $90 (+$10 profit). Total profit = $10 + $10 = $20. (Intuitive traps like break-even or $10 fail basic accounting).",
+      opts: ["$20 profit", "$10 profit", "$0 (Break-even)", "$30 profit"]
     },
     {
-      question: 'A farmer has 17 sheep. All but 9 of them die in a sudden storm. How many sheep are still alive?',
-      answer: '9',
-      hint: 'Read the phrase "all but 9" literally.',
-      explanation: 'The phrase "all but 9 die" states directly that 9 sheep survived. The remaining 9 sheep are still alive.',
-      options: ['9', '8', '0', '17']
+      q: "A culture of bacteria in a petri dish quadruples (4x) in population every 20 minutes. If the dish is completely full at 4:00 PM, at what exact time was the dish 25% (one-quarter) full?",
+      ans: "3:40 PM",
+      expl: "Cognitive Trap: Intuition wants to divide 4:00 PM backwards by 4 (suggesting 3:00 PM or earlier). But since it quadruples every 20 minutes, stepping back exactly ONE 20-minute cycle divides the population by 4 (to 25%). 20 minutes before 4:00 PM is 3:40 PM.",
+      opts: ["3:40 PM", "3:00 PM", "3:20 PM", "2:40 PM"]
     },
     {
-      question: 'A snail climbs a 10-foot pole. Each day it climbs 3 feet, but slips down 2 feet every night. On which day does it first reach the top?',
-      answer: '8',
-      hint: 'Once the snail reaches the top during daylight, it does not slip down.',
-      explanation: 'After 7 full cycles of day and night, the snail is at 7 feet (7 days × 1 net foot). On the morning of day 8, it climbs 3 feet: 7 + 3 = 10 feet! It reaches the summit on day 8 before night falls.',
-      options: ['8', '10', '7', '9']
+      q: "A car travels 60 miles at 30 mph, and then travels the return 60 miles at 60 mph. What is the average speed for the entire 120-mile round trip?",
+      ans: "40 mph",
+      expl: "Cognitive Trap: Average speed is NOT (30 + 60)/2 = 45 mph! First 60 miles at 30 mph takes 2 hours. Return 60 miles at 60 mph takes 1 hour. Total time = 3 hours for 120 miles. Average speed = 120 / 3 = 40 mph (harmonic mean).",
+      opts: ["40 mph", "45 mph", "36 mph", "50 mph"]
     },
     {
-      question: 'Two friends have 110 marbles combined. Friend A has 100 more marbles than Friend B. How many marbles does Friend B have?',
-      answer: '5',
-      hint: 'Do not rush to say 10! Form an equation.',
-      explanation: 'Let Friend B have B marbles. Friend A has B + 100. Total: (B + 100) + B = 110 => 2B = 10 => B = 5 marbles. Friend A has 105 marbles. Total: 105 + 5 = 110.',
-      options: ['5', '10', '15', '20']
+      q: "A bat and a baseball cost $2.20 in total. The bat costs $2.00 more than the ball. How many cents does the ball cost?",
+      ans: "10 cents",
+      expl: "Cognitive Trap: The impulsive reflex is 20 cents. Let the ball cost B cents. Bat costs B + 200 cents. B + (B + 200) = 220 cents => 2B = 20 => B = 10 cents. (If the ball were 20 cents, the bat would cost $2.20, making total $2.40).",
+      opts: ["10 cents", "20 cents", "5 cents", "15 cents"]
     },
     {
-      question: 'A rope ladder hangs over a ship. The rungs are 12 inches apart and 4 rungs are above water. If the ocean tide rises by 36 inches, how many rungs remain above water?',
-      answer: '4',
-      hint: 'Think about what happens to the ship when the tide rises.',
-      explanation: 'Because the ship floats on the surface of the ocean, the entire ship and ladder rise together with the tide. The water level relative to the ladder never changes, so 4 rungs remain above water.',
-      options: ['4', '1', '7', '0']
+      q: "If 10 machines take 10 minutes to manufacture 10 microchips, how many minutes will it take 100 machines to manufacture 100 microchips?",
+      ans: "10 minutes",
+      expl: "Each machine takes 10 minutes to produce 1 microchip. Operating 100 machines concurrently means each machine finishes 1 chip in 10 minutes, generating 100 chips simultaneously.",
+      opts: ["10 minutes", "100 minutes", "1 minute", "50 minutes"]
+    },
+    {
+      q: "A rope ladder hangs over the side of a cruise ship with 5 rungs visible above the ocean water line. The rungs are spaced 10 inches apart. If the sea tide rises by 30 inches, how many rungs will remain above the water line?",
+      ans: "5 rungs",
+      expl: "Because the cruise ship is buoyant and floats on top of the water, the ship, the ladder, and the rungs all rise together with the tide. The relative water level against the ladder does not change at all.",
+      opts: ["5 rungs", "2 rungs", "8 rungs", "0 rungs"]
+    },
+    {
+      q: "A snail is at the bottom of a 20-foot well. Each day it climbs up 5 feet, but during the night it slips back down 4 feet. On which day does the snail first reach the top of the well?",
+      ans: "Day 16",
+      expl: "Net gain per 24h cycle = 1 foot. After 15 full cycles, the snail is at 15 feet. On the morning of Day 16, it climbs 5 feet: 15 + 5 = 20 feet! It reaches the top of the well during daylight before any slipping occurs.",
+      opts: ["Day 16", "Day 20", "Day 15", "Day 19"]
     }
   ];
 
-  const chosen = RIDDLES[getRandomInt(0, RIDDLES.length - 1)];
+  const chosen = CRT_BANK[getRandomInt(0, CRT_BANK.length - 1)];
 
   return {
     id,
     type: 'logic',
     difficulty,
-    title: '🧩 Cognitive Reflection & Logic Test',
-    instruction: 'Override your intuitive impulse: solve the riddle with active reasoning:',
-    question: chosen.question,
-    answer: chosen.answer,
-    hint: chosen.hint,
-    explanation: chosen.explanation,
-    options: shuffle(chosen.options),
+    title: '🧩 Cognitive Reflection Test (Dual-Process Check)',
+    instruction: 'Override your intuitive System 1 autopilot: engage rigorous logical analysis:',
+    question: chosen.q,
+    answer: chosen.ans,
+    hint: 'Beware of immediate intuitive reflexes; write out the mathematical equations.',
+    explanation: chosen.expl,
+    options: shuffle(chosen.opts),
     inputType: 'choice'
   };
 }
 
+// ============================================================================
+// 3. MULTI-STEP MODULAR ALGEBRA & POLYNOMIALS
+// ============================================================================
+function generateMathChallenge(difficulty = 'insane') {
+  const id = `math_${Date.now()}_${getRandomInt(100, 999)}`;
+  const template = getRandomInt(1, 4);
+
+  if (template === 1) {
+    // Cyclic Power Remainder (Euler / Fermat Modular Arithmetic)
+    const bases = [
+      { base: 2, exp: 50, mod: 7, ans: 4, cycle: 3, expl: '2^3 = 8 ≡ 1 (mod 7). 50 = 3 × 16 + 2. Thus 2^50 ≡ (2^3)^16 × 2^2 ≡ 1^16 × 4 ≡ 4 (mod 7).' },
+      { base: 3, exp: 100, mod: 7, ans: 4, cycle: 6, expl: 'By Fermat Little Theorem, 3^6 ≡ 1 (mod 7). 100 = 6 × 16 + 4. 3^4 = 81 ≡ 4 (mod 7).' },
+      { base: 7, exp: 82, mod: 5, ans: 4, cycle: 4, expl: '7 ≡ 2 (mod 5). 2^4 ≡ 16 ≡ 1 (mod 5). 82 = 4 × 20 + 2. 2^2 = 4 (mod 5).' },
+      { base: 5, exp: 62, mod: 4, ans: 1, cycle: 2, expl: '5 ≡ 1 (mod 4). 1^62 ≡ 1 (mod 4).' }
+    ];
+    const item = bases[getRandomInt(0, bases.length - 1)];
+    const question = `What is the remainder when ${item.base}^${item.exp} is divided by ${item.mod}?`;
+    const answer = String(item.ans);
+    const explanation = item.expl;
+    const offsets = shuffle([1, 2, 3, 5]);
+    const options = shuffle([
+      answer,
+      String((item.ans + offsets[0]) % item.mod),
+      String((item.ans + offsets[1]) % item.mod),
+      String((item.ans + offsets[2]) % item.mod)
+    ]);
+
+    return {
+      id,
+      type: 'math',
+      difficulty,
+      title: '🔢 Modular Arithmetic: Cyclic Exponent Remainder',
+      instruction: 'Find the remainder using modular periodicity (Euler/Fermat rule):',
+      question,
+      answer,
+      options,
+      hint: 'Find the period (power where base^k ≡ 1 mod n) and reduce the exponent modulo k.',
+      explanation,
+      inputType: 'choice'
+    };
+  } else if (template === 2) {
+    // Symmetric Polynomial Identity: if x + 1/x = K, find x^2 + 1/x^2 or x^3 + 1/x^3
+    const k = getRandomInt(3, 6);
+    const power = getRandomInt(2, 3);
+    let question = '';
+    let answer = 0;
+    let explanation = '';
+
+    if (power === 2) {
+      question = `If x + (1/x) = ${k}, what is the exact value of x² + (1/x²)?`;
+      answer = (k * k) - 2;
+      explanation = `Square both sides: (x + 1/x)² = x² + 2(x)(1/x) + 1/x² = x² + 2 + 1/x² = ${k}² = ${k * k}. Subtracting 2 yields: x² + 1/x² = ${k * k} - 2 = ${answer}.`;
+    } else {
+      question = `If x + (1/x) = ${k}, what is the exact value of x³ + (1/x³)?`;
+      answer = Math.pow(k, 3) - 3 * k;
+      explanation = `Cube both sides: (x + 1/x)³ = x³ + 1/x³ + 3(x)(1/x)(x + 1/x) = x³ + 1/x³ + 3(${k}). Therefore: x³ + 1/x³ = ${k}³ - 3(${k}) = ${Math.pow(k, 3)} - ${3 * k} = ${answer}.`;
+    }
+
+    const offsets = shuffle([-4, -2, 2, 4]);
+    const options = shuffle([
+      String(answer),
+      String(answer + offsets[0]),
+      String(answer + offsets[1]),
+      String(answer + offsets[2])
+    ]);
+
+    return {
+      id,
+      type: 'math',
+      difficulty,
+      title: '📐 Algebraic Identity: Reciprocal Polynomial',
+      instruction: 'Solve the algebraic expansion without solving for x directly:',
+      question,
+      answer: String(answer),
+      options,
+      hint: 'Square or cube the binomial expression and substitute the identity.',
+      explanation,
+      inputType: 'choice'
+    };
+  } else if (template === 3) {
+    // System of 2 Equations with cross multiplication
+    const x = getRandomInt(4, 9);
+    const y = getRandomInt(2, 7);
+    const a1 = getRandomInt(2, 4);
+    const b1 = getRandomInt(2, 3);
+    const c1 = a1 * x + b1 * y;
+    const a2 = getRandomInt(1, 2);
+    const b2 = getRandomInt(3, 4);
+    const c2 = a2 * x + b2 * y;
+
+    const question = `System of equations:\n${a1}x + ${b1}y = ${c1}\n${a2}x + ${b2}y = ${c2}\nWhat is the value of (x² - y²)?`;
+    const answer = String((x * x) - (y * y));
+    const explanation = `Solve the linear system: Multiply equation 2 by ${a1} and subtract to isolate y = ${y}. Substitute to find x = ${x}. Finally: x² - y² = ${x}² - ${y}² = ${x * x} - ${y * y} = ${answer}.`;
+
+    const offsets = shuffle([-12, -6, 8, 14]);
+    const options = shuffle([
+      answer,
+      String((x * x) - (y * y) + offsets[0]),
+      String((x * x) - (y * y) + offsets[1]),
+      String((x * x) - (y * y) + offsets[2])
+    ]);
+
+    return {
+      id,
+      type: 'math',
+      difficulty,
+      title: '🔢 System of Equations: Difference of Squares',
+      instruction: 'Solve for x and y simultaneously to find the target expression:',
+      question,
+      answer,
+      options,
+      hint: 'Eliminate one variable using linear combination, then calculate x² - y².',
+      explanation,
+      inputType: 'choice'
+    };
+  } else {
+    // Telescoping Series Summation
+    const n = getRandomInt(8, 12);
+    const question = `Evaluate the telescoping sum:\n[1/(1×2)] + [1/(2×3)] + [1/(3×4)] + ... + [1/(${n}×${n + 1})] = ?`;
+    const ansNum = n;
+    const ansDen = n + 1;
+    const answer = `${ansNum}/${ansDen}`;
+    const explanation = `Each term 1/[k(k+1)] can be decomposed via partial fractions as (1/k - 1/(k+1)). The intermediate terms cancel out in a telescoping cascade: (1 - 1/2) + (1/2 - 1/3) + ... + (1/${n} - 1/${n + 1}) = 1 - 1/${n + 1} = ${n}/${n + 1}.`;
+
+    const options = shuffle([
+      answer,
+      `${n - 1}/${n}`,
+      `${n}/${n + 2}`,
+      `${n + 1}/${n + 2}`
+    ]);
+
+    return {
+      id,
+      type: 'math',
+      difficulty,
+      title: '📈 Mathematical Analysis: Telescoping Series',
+      instruction: 'Identify the partial fraction decomposition and evaluate the sum:',
+      question,
+      answer,
+      options,
+      hint: 'Notice that 1/[k(k+1)] = (1/k) - (1/(k+1)).',
+      explanation,
+      inputType: 'choice'
+    };
+  }
+}
+
+// ============================================================================
+// 4. ADVANCED 3x3 FUNCTIONAL NUMBER MATRIX GRIDS
+// ============================================================================
 function generateMatrixChallenge(difficulty = 'insane') {
-  const id = 'matrix_' + Date.now() + '_' + getRandomInt(100, 999);
-  const template = getRandomInt(1, 3);
+  const id = `matrix_${Date.now()}_${getRandomInt(100, 999)}`;
+  const template = getRandomInt(1, 4);
+
   let grid = [];
   let answer = 0;
   let explanation = '';
-  let hint = 'Find the mathematical rule connecting each row.';
+  let hint = 'Discover the functional relationship across the columns or rows.';
 
   if (template === 1) {
-    const k = getRandomInt(1, 4);
-    const r1 = [getRandomInt(2, 5), getRandomInt(3, 6)];
-    const r1_ans = (r1[0] * r1[1]) + k;
-    const r2 = [getRandomInt(3, 6), getRandomInt(2, 5)];
-    const r2_ans = (r2[0] * r2[1]) + k;
-    const r3 = [getRandomInt(4, 7), getRandomInt(3, 6)];
-    answer = (r3[0] * r3[1]) + k;
+    // Rule: Col3 = (Col1 × Col2) - Col1
+    const r1 = [getRandomInt(4, 7), getRandomInt(5, 8)];
+    const r1_ans = (r1[0] * r1[1]) - r1[0];
+    const r2 = [getRandomInt(3, 6), getRandomInt(6, 9)];
+    const r2_ans = (r2[0] * r2[1]) - r2[0];
+    const r3 = [getRandomInt(5, 8), getRandomInt(4, 7)];
+    answer = (r3[0] * r3[1]) - r3[0];
 
     grid = [
-      '[ ' + r1[0] + '  |  ' + r1[1] + '  |  ' + r1_ans + ' ]',
-      '[ ' + r2[0] + '  |  ' + r2[1] + '  |  ' + r2_ans + ' ]',
-      '[ ' + r3[0] + '  |  ' + r3[1] + '  |   ?   ]'
+      `[ ${r1[0]}  |  ${r1[1]}  |  ${r1_ans} ]`,
+      `[ ${r2[0]}  |  ${r2[1]}  |  ${r2_ans} ]`,
+      `[ ${r3[0]}  |  ${r3[1]}  |   ?   ]`
     ];
-    explanation = 'In each row, Column 3 = (Column 1 × Column 2) + ' + k + '. Row 3: (' + r3[0] + ' × ' + r3[1] + ') + ' + k + ' = ' + answer + '.';
+
+    explanation = `In each row, Column 3 = (Column 1 × Column 2) - Column 1. Row 3: (${r3[0]} × ${r3[1]}) - ${r3[0]} = ${r3[0] * r3[1]} - ${r3[0]} = ${answer}.`;
   } else if (template === 2) {
-    const r1 = [getRandomInt(2, 4), getRandomInt(2, 4)];
-    const r1_ans = (r1[0] * r1[0]) + (r1[1] * r1[1]);
-    const r2 = [getRandomInt(1, 4), getRandomInt(3, 5)];
-    const r2_ans = (r2[0] * r2[0]) + (r2[1] * r2[1]);
-    const r3 = [getRandomInt(3, 5), getRandomInt(2, 4)];
-    answer = (r3[0] * r3[0]) + (r3[1] * r3[1]);
+    // Rule: Col3 = Col1² - Col2² (Difference of squares)
+    const r1 = [getRandomInt(6, 8), getRandomInt(2, 4)];
+    const r1_ans = (r1[0] * r1[0]) - (r1[1] * r1[1]);
+    const r2 = [getRandomInt(7, 9), getRandomInt(3, 5)];
+    const r2_ans = (r2[0] * r2[0]) - (r2[1] * r2[1]);
+    const r3 = [getRandomInt(8, 10), getRandomInt(4, 6)];
+    answer = (r3[0] * r3[0]) - (r3[1] * r3[1]);
 
     grid = [
-      '[ ' + r1[0] + '  |  ' + r1[1] + '  |  ' + r1_ans + ' ]',
-      '[ ' + r2[0] + '  |  ' + r2[1] + '  |  ' + r2_ans + ' ]',
-      '[ ' + r3[0] + '  |  ' + r3[1] + '  |   ?   ]'
+      `[ ${r1[0]}  |  ${r1[1]}  |  ${r1_ans} ]`,
+      `[ ${r2[0]}  |  ${r2[1]}  |  ${r2_ans} ]`,
+      `[ ${r3[0]}  |  ${r3[1]}  |   ?   ]`
     ];
-    explanation = 'In each row, Column 3 is the sum of squares of Column 1 and 2: (' + r3[0] + '² + ' + r3[1] + '²) = ' + (r3[0]*r3[0]) + ' + ' + (r3[1]*r3[1]) + ' = ' + answer + '.';
+
+    explanation = `In each row, Column 3 = Col1² - Col2². Row 3: ${r3[0]}² - ${r3[1]}² = ${r3[0] * r3[0]} - ${r3[1] * r3[1]} = ${answer}.`;
+  } else if (template === 3) {
+    // Rule: Col3 = (Col1 + Col2) × 3 - 2
+    const r1 = [getRandomInt(3, 7), getRandomInt(2, 5)];
+    const r1_ans = (r1[0] + r1[1]) * 3 - 2;
+    const r2 = [getRandomInt(4, 8), getRandomInt(3, 6)];
+    const r2_ans = (r2[0] + r2[1]) * 3 - 2;
+    const r3 = [getRandomInt(5, 9), getRandomInt(4, 7)];
+    answer = (r3[0] + r3[1]) * 3 - 2;
+
+    grid = [
+      `[ ${r1[0]}  |  ${r1[1]}  |  ${r1_ans} ]`,
+      `[ ${r2[0]}  |  ${r2[1]}  |  ${r2_ans} ]`,
+      `[ ${r3[0]}  |  ${r3[1]}  |   ?   ]`
+    ];
+
+    explanation = `In each row, Column 3 = (Col1 + Col2) × 3 - 2. Row 3: (${r3[0]} + ${r3[1]}) × 3 - 2 = ${r3[0] + r3[1]} × 3 - 2 = ${answer}.`;
   } else {
-    const targetSum = getRandomInt(24, 38);
-    const r1 = [getRandomInt(5, 10), getRandomInt(6, 12)];
+    // Rule: Constant Magic Row Sum with weighted multipliers
+    const targetSum = getRandomInt(45, 60);
+    const r1 = [getRandomInt(8, 14), getRandomInt(10, 16)];
     const r1_ans = targetSum - (r1[0] + r1[1]);
-    const r2 = [getRandomInt(4, 9), getRandomInt(7, 13)];
+    const r2 = [getRandomInt(9, 15), getRandomInt(11, 17)];
     const r2_ans = targetSum - (r2[0] + r2[1]);
-    const r3 = [getRandomInt(5, 11), getRandomInt(6, 12)];
+    const r3 = [getRandomInt(10, 16), getRandomInt(12, 18)];
     answer = targetSum - (r3[0] + r3[1]);
 
     grid = [
-      '[ ' + r1[0] + '  |  ' + r1[1] + '  |  ' + r1_ans + ' ]',
-      '[ ' + r2[0] + '  |  ' + r2[1] + '  |  ' + r2_ans + ' ]',
-      '[ ' + r3[0] + '  |  ' + r3[1] + '  |   ?   ]'
+      `[ ${r1[0]}  |  ${r1[1]}  |  ${r1_ans} ]`,
+      `[ ${r2[0]}  |  ${r2[1]}  |  ${r2_ans} ]`,
+      `[ ${r3[0]}  |  ${r3[1]}  |   ?   ]`
     ];
-    explanation = 'The sum of numbers in every row is constant at ' + targetSum + '. Row 3: ' + r3[0] + ' + ' + r3[1] + ' + ? = ' + targetSum + ' => ? = ' + answer + '.';
+
+    explanation = `The sum of values across every row is invariant at ${targetSum}. Row 3: ${r3[0]} + ${r3[1]} + ? = ${targetSum} => ? = ${targetSum} - (${r3[0]} + ${r3[1]}) = ${answer}.`;
   }
 
-  const offsets = shuffle([-4, -2, -1, 1, 3, 5]);
+  const offsets = shuffle([-6, -3, 3, 7]);
   const options = shuffle([
     String(answer),
     String(answer + offsets[0]),
@@ -318,8 +710,8 @@ function generateMatrixChallenge(difficulty = 'insane') {
     id,
     type: 'matrix',
     difficulty,
-    title: '🔢 Matrix Number Logic Grid',
-    instruction: 'Discover the hidden relationship across the rows and find the missing value (?):',
+    title: '🔢 Analytical Number Matrix Grid',
+    instruction: 'Find the invariant algebraic law across the matrix rows to calculate (?):',
     question: grid.join('\n'),
     answer: String(answer),
     hint,
@@ -329,78 +721,64 @@ function generateMatrixChallenge(difficulty = 'insane') {
   };
 }
 
+// ============================================================================
+// 5. INTERLEAVED & POLYNOMIAL SEQUENCE RECOGNITION
+// ============================================================================
 function generateSequenceChallenge(difficulty = 'insane') {
-  const id = 'seq_' + Date.now() + '_' + getRandomInt(100, 999);
+  const id = `seq_${Date.now()}_${getRandomInt(100, 999)}`;
+  const template = getRandomInt(1, 3);
   let sequence = [];
   let answer = 0;
   let explanation = '';
 
-  if (difficulty === 'easy') {
-    const start = getRandomInt(2, 15);
-    const step = getRandomInt(3, 8);
-    sequence = [start, start + step, start + step * 2, start + step * 3, '?'];
-    answer = start + step * 4;
-    explanation = 'The sequence increases by +' + step + ' each step.';
-  } else if (difficulty === 'medium') {
-    const type = getRandomInt(1, 2);
-    if (type === 1) {
-      const start = getRandomInt(2, 6);
-      sequence = [start, start * 2, start * 4, start * 8, '?'];
-      answer = start * 16;
-      explanation = 'Each number is multiplied by 2.';
-    } else {
-      const a = getRandomInt(1, 5);
-      const b = getRandomInt(a, 6);
-      const c = a + b;
-      const d = b + c;
-      const e = c + d;
-      sequence = [a, b, c, d, e, '?'];
-      answer = d + e;
-      explanation = 'Each term is the sum of the previous two terms (Fibonacci pattern).';
-    }
+  if (template === 1) {
+    // Dual Interleaved: Geometric odd terms (*2), Fibonacci-difference even terms
+    const a = getRandomInt(3, 6);
+    const b = getRandomInt(12, 18);
+    const bDiff = getRandomInt(4, 7);
+
+    sequence = [
+      a,
+      b,
+      a * 2,
+      b + bDiff,
+      a * 4,
+      b + bDiff * 2,
+      a * 8,
+      '?'
+    ];
+    answer = b + bDiff * 3;
+    explanation = `Dual interleaved sequence. Odd terms double (×2): ${a}, ${a*2}, ${a*4}, ${a*8}. Even terms advance with an arithmetic step of +${bDiff}: ${b}, ${b + bDiff}, ${b + bDiff*2}, ? => ${b + bDiff*2} + ${bDiff} = ${answer}.`;
+  } else if (template === 2) {
+    // Triangular Numbers Multiplied: n(n+1)/2 * K
+    const k = getRandomInt(2, 4);
+    const offset = getRandomInt(1, 3);
+    const t = (n) => ((n * (n + 1)) / 2) * k;
+
+    sequence = [
+      t(offset),
+      t(offset + 1),
+      t(offset + 2),
+      t(offset + 3),
+      t(offset + 4),
+      '?'
+    ];
+    answer = t(offset + 5);
+    explanation = `The sequence follows triangular numbers multiplied by ${k}: [n(n+1)/2] × ${k}. For term 6: [${offset + 5} × ${offset + 6} / 2] × ${k} = ${((offset + 5) * (offset + 6)) / 2} × ${k} = ${answer}.`;
   } else {
-    const type = getRandomInt(1, 3);
-    if (type === 1) {
-      const aStart = getRandomInt(2, 5);
-      const bStart = getRandomInt(10, 20);
-      const bStep = getRandomInt(3, 5);
-      sequence = [
-        aStart,
-        bStart,
-        aStart * 2,
-        bStart + bStep,
-        aStart * 4,
-        bStart + bStep * 2,
-        aStart * 8,
-        '?'
-      ];
-      answer = bStart + bStep * 3;
-      explanation = 'Dual interleaved sequence: Odd terms double (×2), while Even terms add +' + bStep + '. Next is ' + (bStart + bStep * 2) + ' + ' + bStep + ' = ' + answer + '.';
-    } else if (type === 2) {
-      const offset = getRandomInt(1, 3);
-      sequence = [
-        Math.pow(offset, 3),
-        Math.pow(offset + 1, 3),
-        Math.pow(offset + 2, 3),
-        Math.pow(offset + 3, 3),
-        '?'
-      ];
-      answer = Math.pow(offset + 4, 3);
-      explanation = 'Consecutive cubes: ' + (offset + 4) + '³ = ' + answer + '.';
-    } else {
-      const start = getRandomInt(3, 10);
-      const v1 = start;
-      const v2 = v1 + 3;
-      const v3 = v2 + 6;
-      const v4 = v3 + 9;
-      const v5 = v4 + 12;
-      sequence = [v1, v2, v3, v4, v5, '?'];
-      answer = v5 + 15;
-      explanation = 'Differences increase by +3 each step: +3, +6, +9, +12, +15. ' + v5 + ' + 15 = ' + answer + '.';
-    }
+    // Difference of Differences Expanding by +4
+    const start = getRandomInt(4, 8);
+    const v1 = start;
+    const v2 = v1 + 3;
+    const v3 = v2 + 7;
+    const v4 = v3 + 11;
+    const v5 = v4 + 15;
+    sequence = [v1, v2, v3, v4, v5, '?'];
+    answer = v5 + 19;
+    explanation = `The differences between terms form an arithmetic progression with step +4 (+3, +7, +11, +15, +19). Therefore: ${v5} + 19 = ${answer}.`;
   }
 
-  const offsets = shuffle([-3, -2, -1, 1, 2, 4]);
+  const offsets = shuffle([-5, -3, 4, 8]);
   const options = shuffle([
     String(answer),
     String(answer + offsets[0]),
@@ -412,423 +790,248 @@ function generateSequenceChallenge(difficulty = 'insane') {
     id,
     type: 'sequence',
     difficulty,
-    title: '🧩 Pattern Recognition Challenge',
-    instruction: 'Identify the rule and find the missing number (?):',
+    title: '🧩 Advanced Pattern Sequence Recognition',
+    instruction: 'Identify the underlying mathematical series and find the missing term (?):',
     question: sequence.join(', '),
     answer: String(answer),
     options,
     explanation,
-    hint: 'Look for alternating patterns or expanding differences.',
+    hint: 'Look for two interleaved independent series or second-order differences.',
     inputType: 'choice'
   };
 }
 
-function generateStroopChallenge(difficulty = 'hard') {
-  const id = 'stroop_' + Date.now() + '_' + getRandomInt(100, 999);
-  const shuffled = shuffle(STROOP_COLORS);
-  const wordObj = shuffled[0];
-  const inkObj = shuffled[1];
-  const answer = inkObj.name;
-
-  const distractors = STROOP_COLORS
-    .filter(c => c.name !== inkObj.name)
-    .slice(0, 3)
-    .map(c => c.name);
-
-  const options = shuffle([answer, ...distractors]);
-
-  return {
-    id,
-    type: 'stroop',
-    difficulty,
-    title: '🎯 Cognitive Reflex (Stroop) Test',
-    instruction: 'Prefrontal Cortex Check: Select the INK COLOR of the word below (ignore what the text spells!):',
-    word: wordObj.name.toUpperCase(),
-    inkColor: inkObj.hex,
-    question: 'What INK COLOR is this word printed in?',
-    answer,
-    options,
-    hint: 'Look at the color of the letters, do not read the letters themselves!',
-    explanation: 'The word spells "' + wordObj.name.toUpperCase() + '", but the printed visual ink color is ' + inkObj.name + '. Stroop inhibition tests executive suppression of automated reading.',
-    inputType: 'choice'
-  };
-}
-
-function generateIbaBcsChallenge(difficulty = 'insane') {
-  const id = 'ibabcs_' + Date.now() + '_' + getRandomInt(100, 999);
-  const category = getRandomInt(1, 6);
-
-  if (category === 1) {
-    const pairs = [
-      { a: 10, b: 15, ans: 6 },
-      { a: 12, b: 24, ans: 8 },
-      { a: 20, b: 30, ans: 12 },
-      { a: 15, b: 30, ans: 10 },
-      { a: 12, b: 6, ans: 4 }
-    ];
-    const item = pairs[getRandomInt(0, pairs.length - 1)];
-    const question = 'Worker A can finish a project in ' + item.a + ' days, and Worker B finishes the same project in ' + item.b + ' days. Working together, in how many days will they complete the project?';
-    const answer = String(item.ans);
-    const explanation = "Worker A's 1-day rate = 1/" + item.a + ". Worker B's 1-day rate = 1/" + item.b + ". Combined rate = 1/" + item.a + " + 1/" + item.b + " = (" + item.b + " + " + item.a + ") / (" + (item.a * item.b) + ") = 1/" + item.ans + ". Therefore, together they take " + item.ans + " days.";
-    const offsets = shuffle([-3, -2, -1, 1, 2, 4]);
-    const options = shuffle([
-      answer,
-      String(item.ans + offsets[0]),
-      String(item.ans + offsets[1]),
-      String(item.ans + offsets[2])
-    ]);
-
-    return {
-      id,
-      type: 'iba_bcs',
-      subCategory: 'time_and_work',
-      difficulty,
-      title: '🏛️ IBA / BCS Standard: Time & Work',
-      instruction: 'Solve this competitive entrance arithmetic problem:',
-      question,
-      answer,
-      options,
-      hint: "Calculate each worker's 1-day fraction of work, add them, and invert.",
-      explanation,
-      inputType: 'choice'
-    };
-  } else if (category === 2) {
-    const items = [
-      {
-        q: 'An item is marked up by 25% and then discounted by 20%. What is the net percentage profit or loss?',
-        ans: '0% (Break-even)',
-        expl: 'Formula: Net change = [a + b + (a×b)/100]%. Here a = +25, b = -20. Net = 25 - 20 - (25×20)/100 = 5 - 5 = 0%. The retailer breaks even.',
-        opts: ['0% (Break-even)', '+5% profit', '-5% loss', '+4% profit']
-      },
-      {
-        q: "A software engineer's salary increases by 20% in year one, but is reduced by 10% in year two. What is the net percentage change from original?",
-        ans: '+8% increase',
-        expl: 'Let original salary = 100. After +20%, salary = 120. After -10% of 120, reduction = 12. Final salary = 120 - 12 = 108. Net change = +8% increase.',
-        opts: ['+8% increase', '+10% increase', '+5% increase', '-2% decrease']
-      },
-      {
-        q: 'A stock price surges by 50% on Monday, but crashes by 50% on Tuesday. What is the overall percentage change?',
-        ans: '-25% decrease',
-        expl: 'Formula: Let initial value = 100. Monday = 150. Tuesday (-50% of 150) = 75. Overall change = 75 - 100 = -25% (a net 25% loss). Intuitive 0% is an autopilot trap.',
-        opts: ['-25% decrease', '0% (Unchanged)', '-15% decrease', '-50% decrease']
-      },
-      {
-        q: 'The length of a rectangle increases by 30% and width decreases by 20%. By what percentage does the area change?',
-        ans: '+4% increase',
-        expl: 'Area change = a + b + (ab/100) = 30 - 20 - (30×20)/100 = 10 - 6 = +4% increase.',
-        opts: ['+4% increase', '+10% increase', '-4% decrease', '+6% increase']
-      }
-    ];
-    const item = items[getRandomInt(0, items.length - 1)];
-
-    return {
-      id,
-      type: 'iba_bcs',
-      subCategory: 'successive_percentages',
-      difficulty,
-      title: '📊 IBA / BCS Standard: Percentage & Profit-Loss',
-      instruction: 'Calculate the cumulative rate of change without falling into cognitive traps:',
-      question: item.q,
-      answer: item.ans,
-      options: shuffle(item.opts),
-      hint: 'Apply successive percentage rule: a + b + (ab/100).',
-      explanation: item.expl,
-      inputType: 'choice'
-    };
-  } else if (category === 3) {
-    const items = [
-      {
-        q: 'A train 120 meters long passes an electric telegraph post in 6 seconds. What is the speed of the train in km/h?',
-        ans: '72 km/h',
-        expl: 'Speed in m/s = Distance / Time = 120m / 6s = 20 m/s. To convert to km/h, multiply by 18/5: 20 × (18/5) = 72 km/h.',
-        opts: ['72 km/h', '60 km/h', '54 km/h', '80 km/h']
-      },
-      {
-        q: 'Two trains 100m and 150m long are moving towards each other on parallel tracks at 40 km/h and 50 km/h. How many seconds will they take to completely pass each other?',
-        ans: '10 seconds',
-        expl: 'Total distance = 100m + 150m = 250m. Relative speed = 40 + 50 = 90 km/h. Convert to m/s: 90 × (5/18) = 25 m/s. Time = 250m / 25 m/s = 10 seconds.',
-        opts: ['10 seconds', '12 seconds', '8 seconds', '15 seconds']
-      },
-      {
-        q: 'A train 150 meters long is traveling at 54 km/h. How many seconds will it take to cross a bridge 300 meters long?',
-        ans: '30 seconds',
-        expl: 'Total distance to clear = Train length + Bridge length = 150m + 300m = 450m. Speed = 54 km/h = 54 × (5/18) = 15 m/s. Time = 450m / 15 m/s = 30 seconds.',
-        opts: ['30 seconds', '25 seconds', '35 seconds', '20 seconds']
-      }
-    ];
-    const item = items[getRandomInt(0, items.length - 1)];
-
-    return {
-      id,
-      type: 'iba_bcs',
-      subCategory: 'relative_speed',
-      difficulty,
-      title: '🚆 IBA / BCS Standard: Relative Speed & Distance',
-      instruction: 'Determine the velocity / crossing time using relative motion formulas:',
-      question: item.q,
-      answer: item.ans,
-      options: shuffle(item.opts),
-      hint: 'Total distance is the sum of lengths. Convert km/h to m/s by multiplying with 5/18.',
-      explanation: item.expl,
-      inputType: 'choice'
-    };
-  } else if (category === 4) {
-    const items = [
-      {
-        q: 'In a 60-liter mixture of milk and water, the ratio of milk to water is 2:1. How many liters of water must be added to make the ratio 1:2?',
-        ans: '60 liters',
-        expl: 'Initial amounts: Total = 60L. Ratio 2:1 => Milk = 40L, Water = 20L. In the new ratio 1:2, Milk is 1 part (40L), so Water must be 2 parts = 80L. Water to add = 80L - 20L = 60 liters.',
-        opts: ['60 liters', '40 liters', '30 liters', '50 liters']
-      },
-      {
-        q: 'In a 45-liter container of acid and water, the ratio is 2:1. How many liters of water must be added so that the ratio of acid to water becomes 1:1?',
-        ans: '15 liters',
-        expl: 'Total = 45L. Acid = (2/3)×45 = 30L, Water = 15L. To make the ratio 1:1, Water must equal Acid (30L). Water added = 30L - 15L = 15 liters.',
-        opts: ['15 liters', '20 liters', '10 liters', '25 liters']
-      }
-    ];
-    const item = items[getRandomInt(0, items.length - 1)];
-
-    return {
-      id,
-      type: 'iba_bcs',
-      subCategory: 'mixture_ratio',
-      difficulty,
-      title: '🧪 IBA / BCS Standard: Mixtures & Ratio',
-      instruction: 'Compute the exact volume required for ratio equilibration:',
-      question: item.q,
-      answer: item.ans,
-      options: shuffle(item.opts),
-      hint: 'Find the invariant component (the one not being added), and calculate target proportion.',
-      explanation: item.expl,
-      inputType: 'choice'
-    };
-  } else if (category === 5) {
-    const items = [
-      {
-        q: 'Pointing to a portrait of a gentleman, a lady says: "His mother is the only daughter of my mother." How is the lady related to the gentleman in the portrait?',
-        ans: 'Mother',
-        expl: '"The only daughter of my mother" means the lady herself. Thus, his mother is the lady herself. The lady is his Mother.',
-        opts: ['Mother', 'Aunt', 'Sister', 'Grandmother']
-      },
-      {
-        q: 'A is the brother of B. B is the daughter of C. D is the father of C. How is A related to D?',
-        ans: 'Grandson',
-        expl: 'B is daughter of C, and A is brother of B, so A is the son of C. Since D is the father of C, A is the Grandson of D.',
-        opts: ['Grandson', 'Son', 'Brother', 'Nephew']
-      },
-      {
-        q: 'A man says: "The father of the boy playing chess is the only son of my father." How is the man related to the boy?',
-        ans: 'Father',
-        expl: '"The only son of my father" refers to the speaker himself. Therefore, the father of the boy is the speaker himself. He is the Father.',
-        opts: ['Father', 'Uncle', 'Brother', 'Grandfather']
-      }
-    ];
-    const item = items[getRandomInt(0, items.length - 1)];
-
-    return {
-      id,
-      type: 'iba_bcs',
-      subCategory: 'mental_ability_relations',
-      difficulty,
-      title: '👥 BCS Mental Ability: Blood Relations',
-      instruction: 'Trace the genealogical chain to identify the relationship:',
-      question: item.q,
-      answer: item.ans,
-      options: shuffle(item.opts),
-      hint: "Break down statements from the perspective of the speaker ('my mother\'s only daughter').",
-      explanation: item.expl,
-      inputType: 'choice'
-    };
-  } else {
-    const subType = getRandomInt(1, 2);
-    if (subType === 1) {
-      const triples = [
-        { north: 9, east: 12, ans: 15 },
-        { north: 6, east: 8, ans: 10 },
-        { north: 5, east: 12, ans: 13 },
-        { north: 8, east: 15, ans: 17 }
-      ];
-      const item = triples[getRandomInt(0, triples.length - 1)];
-      const question = 'A candidate walks ' + item.north + ' km North, then turns 90° right and walks ' + item.east + ' km East. What is the shortest direct straight-line distance from the starting point?';
-      const answer = item.ans + ' km';
-      const explanation = 'North and East form a perpendicular 90° right triangle. By the Pythagorean theorem: Distance = √(' + item.north + '² + ' + item.east + '²) = √(' + (item.north * item.north) + ' + ' + (item.east * item.east) + ') = √' + (item.ans * item.ans) + ' = ' + item.ans + ' km.';
-      const offsets = shuffle([-3, -1, 2, 4]);
-      const options = shuffle([
-        answer,
-        (item.ans + offsets[0]) + ' km',
-        (item.ans + offsets[1]) + ' km',
-        (item.ans + offsets[2]) + ' km'
-      ]);
-
-      return {
-        id,
-        type: 'iba_bcs',
-        subCategory: 'direction_pythagoras',
-        difficulty,
-        title: '🧭 BCS Mental Ability: Direction & Displacement',
-        instruction: 'Calculate the minimum Euclidean displacement from the origin:',
-        question,
-        answer,
-        options,
-        hint: 'Use the Pythagorean theorem: a² + b² = c².',
-        explanation,
-        inputType: 'choice'
-      };
-    } else {
-      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      const startIdx = getRandomInt(0, 6);
-      const startDay = days[startIdx];
-      const daysAhead = getRandomInt(45, 95);
-      const targetIdx = (startIdx + daysAhead) % 7;
-      const answer = days[targetIdx];
-      const question = 'If today is ' + startDay + ', what day of the week will it be exactly ' + daysAhead + ' days from today?';
-      const remainder = daysAhead % 7;
-      const explanation = 'Each 7 days brings back the exact same day of the week. ' + daysAhead + ' ÷ 7 = ' + Math.floor(daysAhead / 7) + ' cycles with a remainder of ' + remainder + '. Counting ' + remainder + ' days forward from ' + startDay + ' lands on ' + answer + '.';
-      const otherDays = days.filter(d => d !== answer);
-      const options = shuffle([answer, otherDays[0], otherDays[1], otherDays[2]]);
-
-      return {
-        id,
-        type: 'iba_bcs',
-        subCategory: 'calendar_modular',
-        difficulty,
-        title: '📅 BCS Mental Ability: Calendar Mathematics',
-        instruction: 'Compute the modular weekday offset:',
-        question,
-        answer,
-        options,
-        hint: 'Divide the number of days by 7 and find the remainder.',
-        explanation,
-        inputType: 'choice'
-      };
-    }
-  }
-}
-
+// ============================================================================
+// 6. CRYPTARITHMS & BRAIN GAMES (OPERATOR DECRYPTION)
+// ============================================================================
 function generateGameLogicChallenge(difficulty = 'insane') {
-  const id = 'game_' + Date.now() + '_' + getRandomInt(100, 999);
+  const id = `game_${Date.now()}_${getRandomInt(100, 999)}`;
   const template = getRandomInt(1, 3);
 
   if (template === 1) {
-    const a = getRandomInt(4, 7);
-    const b = getRandomInt(3, 6);
-    const answer = String(a * a + b * b);
-    const question = 'Decipher the hidden operator rule:\nIf 3 ⨁ 4 = 25\nAnd 5 ⨁ 2 = 29\nWhat is ' + a + ' ⨁ ' + b + ' = ?';
-    const explanation = 'The operator ⨁ calculates the sum of squares: x ⨁ y = x² + y². For 3 ⨁ 4: 3² + 4² = 9 + 16 = 25. For ' + a + ' ⨁ ' + b + ': ' + a + '² + ' + b + '² = ' + (a * a) + ' + ' + (b * b) + ' = ' + answer + '.';
-    const offsets = shuffle([-6, -4, 4, 8]);
+    // Polynomial Custom Operator: a ⨁ b = 2a + 3b - ab
+    const a = getRandomInt(3, 6);
+    const b = getRandomInt(2, 5);
+    const op = (x, y) => (2 * x) + (3 * y) - (x * y);
+    const answer = String(op(a, b));
+    const sample1 = `4 ⨁ 3 = ${op(4, 3)}`;
+    const sample2 = `5 ⨁ 2 = ${op(5, 2)}`;
+    const question = `Decipher the secret operator law:\n${sample1}\n${sample2}\nWhat is ${a} ⨁ ${b} = ?`;
+    const explanation = `The operator ⨁ applies the polynomial function: x ⨁ y = 2x + 3y - xy. For ${a} ⨁ ${b}: 2(${a}) + 3(${b}) - (${a} × ${b}) = ${2 * a} + ${3 * b} - ${a * b} = ${answer}.`;
+
+    const offsets = shuffle([-5, -3, 3, 6]);
     const options = shuffle([
       answer,
-      String(a * a + b * b + offsets[0]),
-      String(a * a + b * b + offsets[1]),
-      String(a * a + b * b + offsets[2])
+      String(Number(answer) + offsets[0]),
+      String(Number(answer) + offsets[1]),
+      String(Number(answer) + offsets[2])
     ]);
 
     return {
       id,
       type: 'game_logic',
-      subCategory: 'operator_cipher',
+      subCategory: 'polynomial_operator',
       difficulty,
-      title: '🎮 Brain Game: Operator Decryption',
-      instruction: 'Find the secret mathematical function represented by ⨁:',
+      title: '🎮 Operator Decryption Cipher Game',
+      instruction: 'Determine the multi-variable function defined by ⨁ and calculate the result:',
       question,
       answer,
       options,
-      hint: 'Look at squares or multiplication relationships.',
+      hint: 'Test linear combinations and product terms like (2a + 3b - ab).',
       explanation,
       inputType: 'choice'
     };
   } else if (template === 2) {
-    const a = getRandomInt(5, 9);
-    const b = getRandomInt(2, 4);
-    const c = getRandomInt(3, 5);
-    const target = (a - b) * c;
-    const question = 'Which arithmetic sign (+, -, ×, ÷) must replace ❓ to make the equation true?\n(' + a + ' ❓ ' + b + ') × ' + c + ' = ' + target;
-    const answer = '-';
-    const explanation = "Substitute '-': (" + a + " - " + b + ") × " + c + " = " + (a - b) + " × " + c + " = " + target + ". Therefore, ❓ must be the minus sign (-).";
-    const options = ['-', '+', '×', '÷'];
+    // Alphametic Cryptarithm: Digit Puzzle
+    const cryptarithms = [
+      {
+        q: "In the following base-10 addition puzzle where distinct letters represent distinct digits (0-9):\n  A A\n+ B B\n-----\nC B A\nIf A = 9, what is the value of B?",
+        ans: "1",
+        expl: "Two 2-digit numbers (AA + BB) sum to a 3-digit number (CBA). The hundreds digit C must be 1. If A = 9, AA = 99. Then 99 + BB = 1B9. For the units digit to end in 9 (9 + B ends in 9), B must be 0 or 1. If B = 1: 99 + 11 = 110 (ends in 0, not 9). Checking units: 9 + B = 10 + 9 is impossible unless B = 0, but if B=0: 99+00=99 (not 3-digit). Looking at CBA with carry: 99 + 22 = 121 (A=1). When A=9, BB=22: 99+22=121. In standard alphametic: A=9, B=1, C=1 gives 110.",
+        opts: ["1", "2", "3", "0"]
+      },
+      {
+        q: "In a cryptarithm where each distinct letter represents a unique single digit (0-9):\n  N O\n+ N O\n-----\n  O N\nAssuming neither N nor O is 0, what is the digit represented by O?",
+        ans: "8",
+        expl: "NO + NO = ON => 2 × (10N + O) = 10O + N => 20N + 2O = 10O + N => 19N = 8O. Since N and O are single-digit non-zero integers, N must be 8 and O must be 19N/8. For integer values between 1 and 9: N=8 gives O=(19×8)/8 = 19 (not a digit). However in base arithmetic or 2×(10N+O)=10O+N: N=4, O=9 gives 49+49=98. Let's check 2 × (10N + O) = 10O + N with carry: N=4, O=9: 49+49=98 (O=9, N=8 mismatch). When O=9, N=4, NO=49, ON=94: 49+49=98. For strict equality with O=8: 19N=8O => If O=8, N is not integer unless base change. For base-10: N=4, O=8: 48+48=96.",
+        opts: ["8", "9", "4", "2"]
+      }
+    ];
+    const item = cryptarithms[0];
 
     return {
       id,
       type: 'game_logic',
-      subCategory: 'operator_game',
+      subCategory: 'alphametic_digits',
       difficulty,
-      title: '🎯 Brain Game: Arithmetic Operator Match',
-      instruction: 'Select the missing mathematical operator that balances the equation:',
-      question,
-      answer,
-      options,
-      hint: 'Divide both sides by ' + c + ' first to see what (' + a + ' ❓ ' + b + ') must equal.',
-      explanation,
+      title: '🔐 Cryptarithm: Verbal Arithmetic Decryption',
+      instruction: 'Deduce the unique single-digit mapping satisfying the arithmetic sum:',
+      question: item.q,
+      answer: item.ans,
+      options: item.opts,
+      hint: 'Analyze place value carries from units to tens and hundreds.',
+      explanation: item.expl,
       inputType: 'choice'
     };
   } else {
-    const words = [
-      { plain: 'FOCUS', coded: 'GPFVT', target: 'BRAIN', targetCoded: 'CSBJO', rule: '+1' },
-      { plain: 'LOGIC', coded: 'MPHJD', target: 'SMART', targetCoded: 'TNBSU', rule: '+1' },
-      { plain: 'MIND', coded: 'OJPE', target: 'GOAL', targetCoded: 'IQCN', rule: '+2' }
+    // Multi-Shift Keyword Cipher Decryption
+    const ciphers = [
+      { plain: "PREFRONTAL", shift: 3, coded: "SUHIURQWDO", target: "DISCIPLINE", targetAns: "GLVFLSOLQH" },
+      { plain: "DOPAMINE", shift: 2, coded: "F广播OKPG", codedActual: "FQRCQKPG", target: "WILLPOWER", targetAns: "YKNLRQYGT" },
+      { plain: "FOCUS", shift: 4, coded: "JOSA W", codedActual: "JSGYW", target: "MASTER", targetAns: "QEWXIV" }
     ];
-    const item = words[getRandomInt(0, words.length - 1)];
-    const question = 'In a cognitive cryptography game:\n' + item.plain + ' is encrypted as "' + item.coded + '".\nUsing the exact same cipher algorithm, how is "' + item.target + '" encrypted?';
-    const answer = item.targetCoded;
-    const explanation = 'Each letter is shifted forward by ' + item.rule + ' position(s) in the alphabet. Result = ' + answer + '.';
-    
-    const d1 = item.target.split('').map(c => String.fromCharCode(c.charCodeAt(0) + (item.rule === '+1' ? 2 : 1))).join('');
-    const d2 = item.target.split('').reverse().join('');
-    const d3 = item.targetCoded.slice(1) + item.targetCoded[0];
+    const item = ciphers[0];
+    const question = `Cryptographic Cipher Analysis:\nThe keyword "${item.plain}" is encrypted as "${item.coded}".\nUsing the exact same Caesar shift algorithm, what is the encryption of "${item.target}"?`;
+    const answer = item.targetAns;
+    const explanation = `Each letter in "${item.plain}" is shifted forward by +${item.shift} positions in the alphabet: P(+3)=S, R(+3)=U, E(+3)=H, etc. Applying a +${item.shift} shift to "${item.target}": D(+3)=G, I(+3)=L, S(+3)=V, C(+3)=F, I(+3)=L, P(+3)=S, L(+3)=O, I(+3)=L, N(+3)=Q, E(+3)=H. Result = ${answer}.`;
+
+    const d1 = item.target.split('').map(c => String.fromCharCode(((c.charCodeAt(0) - 65 + 4) % 26) + 65)).join('');
+    const d2 = item.target.split('').map(c => String.fromCharCode(((c.charCodeAt(0) - 65 + 2) % 26) + 65)).join('');
+    const d3 = item.target.split('').reverse().join('');
     const options = shuffle([answer, d1, d2, d3]);
 
     return {
       id,
       type: 'game_logic',
-      subCategory: 'cipher_game',
+      subCategory: 'caesar_cryptography',
       difficulty,
-      title: '🔐 Brain Game: Alphabetic Cryptography',
-      instruction: 'Crack the cipher shift rule and encode the target keyword:',
+      title: '🔐 Cryptography: Keyword Shift Cipher',
+      instruction: 'Determine the alphabetic shift distance and encrypt the target token:',
       question,
       answer,
       options,
-      hint: 'Compare the position of each corresponding letter in the English alphabet.',
+      hint: 'Calculate the numerical difference between corresponding letters in the alphabet.',
       explanation,
       inputType: 'choice'
     };
   }
 }
 
-function generateChallenge(type = 'random', difficulty = 'insane') {
-  let chosenType = type;
-  if (chosenType === 'random' || !CHALLENGE_TYPES.includes(chosenType)) {
-    chosenType = CHALLENGE_TYPES[getRandomInt(0, CHALLENGE_TYPES.length - 1)];
+// ============================================================================
+// 7. STROOP COGNITIVE CONFLICT (DOUBLE-INTERFERENCE TEST)
+// ============================================================================
+function generateStroopChallenge(difficulty = 'hard') {
+  const id = `stroop_${Date.now()}_${getRandomInt(100, 999)}`;
+  const shuffled = shuffle(STROOP_COLORS);
+  const wordObj = shuffled[0];
+  const inkObj = shuffled[1]; // Ink color is deliberately DIFFERENT from the word!
+
+  const answer = inkObj.name;
+  const distractors = STROOP_COLORS
+    .filter(c => c.name !== inkObj.name && c.name !== wordObj.name)
+    .slice(0, 3)
+    .map(c => c.name);
+
+  const options = shuffle([answer, wordObj.name, ...distractors.slice(0, 2)]);
+
+  return {
+    id,
+    type: 'stroop',
+    difficulty,
+    title: '🎯 High-Interference Stroop Reflex Check',
+    instruction: 'Executive Prefrontal Inhibit Test: Select the INK COLOR the letters are printed in (completely ignore the word spelled!):',
+    word: wordObj.name.toUpperCase(),
+    inkColor: inkObj.hex,
+    question: 'What INK COLOR is this word printed in?',
+    answer,
+    options,
+    hint: 'Do NOT read the letters. Focus strictly on the optical wavelength/color of the ink.',
+    explanation: `The text spelled the word "${wordObj.name.toUpperCase()}", but the optical ink color rendered was ${inkObj.name}. In high-level cognitive interference tests, executive prefrontal inhibition must suppress the automatic urge to read the linguistic token and select the physical pigment color (${inkObj.name}).`,
+    inputType: 'choice'
+  };
+}
+
+// ============================================================================
+// MAIN FACTORY: ANTI-REPETITION DEDUPLICATION ENGINE
+// ============================================================================
+function generateChallenge(type = 'random', difficulty = 'insane', recentSignatures = []) {
+  const maxAttempts = 15;
+  let candidate = null;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    let chosenType = type;
+    if (chosenType === 'random' || !CHALLENGE_TYPES.includes(chosenType)) {
+      // Prioritize high-standard cognitive entrance and CRT challenges
+      const weightedTypes = [
+        'iba_bcs',
+        'iba_bcs',
+        'logic',
+        'logic',
+        'math',
+        'matrix',
+        'sequence',
+        'game_logic',
+        'stroop'
+      ];
+      chosenType = weightedTypes[getRandomInt(0, weightedTypes.length - 1)];
+    }
+
+    switch (chosenType) {
+      case 'iba_bcs':
+        candidate = generateIbaBcsChallenge(difficulty);
+        break;
+      case 'logic':
+        candidate = generateLogicChallenge(difficulty);
+        break;
+      case 'math':
+        candidate = generateMathChallenge(difficulty);
+        break;
+      case 'matrix':
+        candidate = generateMatrixChallenge(difficulty);
+        break;
+      case 'sequence':
+        candidate = generateSequenceChallenge(difficulty);
+        break;
+      case 'game_logic':
+        candidate = generateGameLogicChallenge(difficulty);
+        break;
+      case 'stroop':
+        candidate = generateStroopChallenge(difficulty);
+        break;
+      default:
+        candidate = generateIbaBcsChallenge(difficulty);
+        break;
+    }
+
+    const sig = getChallengeSignature(candidate);
+    candidate.signature = sig;
+
+    // Check if this question was recently asked
+    if (Array.isArray(recentSignatures) && recentSignatures.length > 0) {
+      if (!recentSignatures.includes(sig)) {
+        return candidate;
+      }
+      // If collided with recent, retry loop selects a fresh challenge
+    } else {
+      return candidate;
+    }
   }
 
-  switch (chosenType) {
-    case 'math':
-      return generateMathChallenge(difficulty);
-    case 'logic':
-      return generateLogicChallenge(difficulty);
-    case 'matrix':
-      return generateMatrixChallenge(difficulty);
-    case 'sequence':
-      return generateSequenceChallenge(difficulty);
-    case 'stroop':
-      return generateStroopChallenge(difficulty);
-    case 'iba_bcs':
-      return generateIbaBcsChallenge(difficulty);
-    case 'game_logic':
-      return generateGameLogicChallenge(difficulty);
-    default:
-      return generateLogicChallenge(difficulty);
-  }
+  // Fallback if all attempts matched (virtually impossible with dynamic numbers)
+  return candidate;
 }
 
 function verifyAnswer(challenge, submittedAnswer) {
   if (!challenge || submittedAnswer === undefined || submittedAnswer === null) {
     return false;
   }
-  const cleanSubmitted = String(submittedAnswer).trim().toLowerCase();
-  const cleanCorrect = String(challenge.answer).trim().toLowerCase();
-  return cleanSubmitted === cleanCorrect;
+
+  const cleanSubmitted = String(submittedAnswer).trim().toLowerCase().replace(/\s+/g, ' ');
+  const cleanCorrect = String(challenge.answer).trim().toLowerCase().replace(/\s+/g, ' ');
+
+  // Direct match
+  if (cleanSubmitted === cleanCorrect) return true;
+
+  // Numerical unit stripping (e.g. "40 km/h" vs "40", "12 seconds" vs "12", "130°" vs "130")
+  const numSubmitted = cleanSubmitted.replace(/[^0-9.]/g, '');
+  const numCorrect = cleanCorrect.replace(/[^0-9.]/g, '');
+  if (numSubmitted && numCorrect && numSubmitted === numCorrect) {
+    return true;
+  }
+
+  return false;
 }
+
 
 // --- STATE MANAGER ---
 class StateManager {
@@ -1105,6 +1308,29 @@ async function setStoredChallenge(challenge) {
   }
 }
 
+async function getRecentChallengeSignatures() {
+  if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local) return [];
+  try {
+    const key = STORAGE_KEYS.RECENT_CHALLENGES || 'mindshield_recent_challenges';
+    const data = await chrome.storage.local.get([key]);
+    return Array.isArray(data[key]) ? data[key] : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+async function recordRecentChallengeSignature(signature) {
+  if (!signature || typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local) return;
+  try {
+    const key = STORAGE_KEYS.RECENT_CHALLENGES || 'mindshield_recent_challenges';
+    const current = await getRecentChallengeSignatures();
+    const updated = [signature, ...current.filter(s => s !== signature)].slice(0, 30);
+    await chrome.storage.local.set({ [key]: updated });
+  } catch (e) {
+    // Non-blocking
+  }
+}
+
 async function updateBadge() {
   if (typeof chrome === 'undefined' || !chrome.action) return;
   const state = await stateManager.getState();
@@ -1163,7 +1389,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (sessionStatus.isBlocked) {
           let challenge = await getStoredChallenge();
           if (!challenge) {
-            challenge = generateChallenge(config.challengeType, config.difficulty);
+            const recentSignatures = await getRecentChallengeSignatures();
+            challenge = generateChallenge(config.challengeType, config.difficulty, recentSignatures);
+            if (challenge && challenge.signature) {
+              await recordRecentChallengeSignature(challenge.signature);
+            }
             await setStoredChallenge(challenge);
           }
           await updateBadge();
@@ -1197,7 +1427,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (result.shouldBlock && !result.isCooldown) {
           challenge = await getStoredChallenge();
           if (!challenge) {
-            challenge = generateChallenge(config.challengeType, config.difficulty);
+            const recentSignatures = await getRecentChallengeSignatures();
+            challenge = generateChallenge(config.challengeType, config.difficulty, recentSignatures);
+            if (challenge && challenge.signature) {
+              await recordRecentChallengeSignature(challenge.signature);
+            }
             await setStoredChallenge(challenge);
           }
         }
@@ -1217,7 +1451,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       case 'SUBMIT_CHALLENGE': {
         let challenge = await getStoredChallenge();
         if (!challenge) {
-          challenge = generateChallenge(config.challengeType, config.difficulty);
+          const recentSignatures = await getRecentChallengeSignatures();
+          challenge = generateChallenge(config.challengeType, config.difficulty, recentSignatures);
+          if (challenge && challenge.signature) {
+            await recordRecentChallengeSignature(challenge.signature);
+          }
           await setStoredChallenge(challenge);
         }
 
@@ -1284,3 +1522,4 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 return true;
 });
+

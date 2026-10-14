@@ -35,5 +35,6 @@ export const STORAGE_KEYS = {
   STATE: 'mindshield_state',
   STATS: 'mindshield_stats',
   ACTIVE_CHALLENGE: 'mindshield_active_challenge',
-  LAST_FAILED_CHALLENGE: 'mindshield_last_failed_challenge'
+  LAST_FAILED_CHALLENGE: 'mindshield_last_failed_challenge',
+  RECENT_CHALLENGES: 'mindshield_recent_challenges'
 };

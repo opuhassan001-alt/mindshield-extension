@@ -1,9 +1,32 @@
 import { StateManager } from '../core/state-manager.js';
 import { generateChallenge, verifyAnswer } from '../core/challenge-engine.js';
-import { DEFAULT_CONFIG } from '../core/config.js';
+import { DEFAULT_CONFIG, STORAGE_KEYS } from '../core/config.js';
 
 const stateManager = new StateManager();
 let activeChallenge = null;
+
+async function getRecentChallengeSignatures() {
+  if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local) return [];
+  try {
+    const key = STORAGE_KEYS.RECENT_CHALLENGES || 'mindshield_recent_challenges';
+    const data = await chrome.storage.local.get([key]);
+    return Array.isArray(data[key]) ? data[key] : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+async function recordRecentChallengeSignature(signature) {
+  if (!signature || typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local) return;
+  try {
+    const key = STORAGE_KEYS.RECENT_CHALLENGES || 'mindshield_recent_challenges';
+    const current = await getRecentChallengeSignatures();
+    const updated = [signature, ...current.filter(s => s !== signature)].slice(0, 30);
+    await chrome.storage.local.set({ [key]: updated });
+  } catch (e) {
+    // Non-blocking
+  }
+}
 
 async function updateBadge() {
   if (typeof chrome === 'undefined' || !chrome.action) return;
@@ -64,7 +87,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const sessionStatus = await stateManager.checkSessionStatus();
         if (sessionStatus.isBlocked) {
           if (!activeChallenge) {
-            activeChallenge = generateChallenge(config.challengeType, config.difficulty);
+            const recentSignatures = await getRecentChallengeSignatures();
+            activeChallenge = generateChallenge(config.challengeType, config.difficulty, recentSignatures);
+            if (activeChallenge && activeChallenge.signature) {
+              await recordRecentChallengeSignature(activeChallenge.signature);
+            }
           }
           await updateBadge();
           return sendResponse({
@@ -93,7 +120,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       case 'REEL_SCROLLED': {
         const result = await stateManager.recordReelView();
         if (result.shouldBlock && !result.isCooldown) {
-          activeChallenge = generateChallenge(config.challengeType, config.difficulty);
+          const recentSignatures = await getRecentChallengeSignatures();
+          activeChallenge = generateChallenge(config.challengeType, config.difficulty, recentSignatures);
+          if (activeChallenge && activeChallenge.signature) {
+            await recordRecentChallengeSignature(activeChallenge.signature);
+          }
         }
         await updateBadge();
         return sendResponse({
@@ -106,7 +137,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
       case 'SUBMIT_CHALLENGE': {
         if (!activeChallenge) {
-          activeChallenge = generateChallenge(config.challengeType, config.difficulty);
+          const recentSignatures = await getRecentChallengeSignatures();
+          activeChallenge = generateChallenge(config.challengeType, config.difficulty, recentSignatures);
+          if (activeChallenge && activeChallenge.signature) {
+            await recordRecentChallengeSignature(activeChallenge.signature);
+          }
         }
 
         const isCorrect = verifyAnswer(activeChallenge, request.answer);
