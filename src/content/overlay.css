@@ -1,0 +1,424 @@
+/* MindShield Anti-ADHD Lock Overlay Styles */
+
+#mindshield-overlay-root {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 2147483647 !important;
+  background: rgba(10, 15, 29, 0.96) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+  color: #f8fafc !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  user-select: none !important;
+  animation: msFadeIn 0.3s ease-out !important;
+}
+
+@keyframes msFadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.ms-container {
+  width: 90%;
+  max-width: 520px;
+  background: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(99, 102, 241, 0.2);
+  border-radius: 20px;
+  padding: 32px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.ms-badge-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  color: #a5b4fc;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ms-badge-header.cooldown {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+}
+
+.ms-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+}
+
+.ms-subtitle {
+  font-size: 14px;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin: 0 0 24px 0;
+}
+
+.ms-card {
+  background: #1f2937;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.ms-challenge-question {
+  font-size: 26px;
+  font-weight: 700;
+  color: #38bdf8;
+  margin: 12px 0;
+  letter-spacing: 1px;
+}
+
+.ms-stroop-word {
+  font-size: 40px;
+  font-weight: 900;
+  margin: 16px 0;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.ms-input-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.ms-input {
+  flex: 1;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 18px;
+  padding: 12px 16px;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ms-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+}
+
+.ms-btn {
+  background: #4f46e5;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.ms-btn:hover {
+  background: #4338ca;
+}
+
+.ms-btn:active {
+  transform: scale(0.98);
+}
+
+.ms-btn-secondary {
+  background: transparent;
+  color: #94a3b8;
+  border: 1px solid #334155;
+  padding: 8px 16px;
+  font-size: 13px;
+  margin-top: 14px;
+}
+
+.ms-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
+}
+
+.ms-choices-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.ms-choice-btn {
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: #f1f5f9;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ms-choice-btn:hover {
+  background: #1e293b;
+  border-color: #6366f1;
+  color: #ffffff;
+}
+
+.ms-feedback {
+  margin-top: 14px;
+  font-size: 14px;
+  min-height: 20px;
+  font-weight: 600;
+}
+
+.ms-feedback.error {
+  color: #f87171;
+  animation: msShake 0.3s;
+}
+
+.ms-feedback.success {
+  color: #4ade80;
+}
+
+@keyframes msShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+/* Cooldown view */
+.ms-cooldown-timer {
+  font-size: 56px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #f43f5e;
+  letter-spacing: 2px;
+  margin: 16px 0;
+  text-shadow: 0 0 30px rgba(244, 63, 94, 0.4);
+}
+
+.ms-breath-circle {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.4) 0%, rgba(99, 102, 241, 0.05) 70%);
+  border: 2px solid #6366f1;
+  margin: 20px auto;
+  animation: msPulse 4s infinite ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #c7d2fe;
+}
+
+@keyframes msPulse {
+  0%, 100% { transform: scale(0.9); opacity: 0.6; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
+.ms-quote {
+  font-style: italic;
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 20px;
+}
+
+/* Celebratory Particle FX */
+@keyframes msBurstParticle {
+  0% {
+    transform: translate(-50%, -50%) scale(0) rotate(0deg);
+    opacity: 1;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1) rotate(var(--spin));
+    opacity: 0;
+  }
+}
+
+.ms-container.unlocked {
+  animation: msSuccessPop 0.4s ease-out forwards;
+}
+
+@keyframes msSuccessPop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.04); box-shadow: 0 0 60px rgba(74, 222, 128, 0.4); }
+  100% { transform: scale(1); }
+}
+
+/* Sound Mute Toggle */
+.ms-sound-toggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ms-sound-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+/* Neuro-Focus Soundscape Player */
+.ms-focus-soundscape-box {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 18px;
+  text-align: left;
+}
+
+.ms-soundscape-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #c7d2fe;
+  margin-bottom: 10px;
+}
+
+.ms-soundscape-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+.ms-soundscape-badge.playing {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.ms-soundscape-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.ms-soundscape-select {
+  flex: 1;
+  background: #090d16;
+  border: 1px solid #334155;
+  color: #f1f5f9;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+}
+
+.ms-soundscape-btn {
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ms-soundscape-btn:hover {
+  background: #4338ca;
+}
+
+.ms-soundscape-btn.playing {
+  background: #dc2626;
+}
+
+.ms-soundscape-desc {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+/* Live Floating Reel Counter Pill */
+#mindshield-counter-pill {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  z-index: 2147483640 !important;
+  background: rgba(15, 23, 42, 0.94) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(99, 102, 241, 0.45) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(99, 102, 241, 0.25) !important;
+  color: #f8fafc !important;
+  padding: 8px 16px !important;
+  border-radius: 9999px !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  user-select: none !important;
+}
+
+#mindshield-counter-pill:hover {
+  transform: translateY(-2px) !important;
+  border-color: #818cf8 !important;
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.6), 0 0 25px rgba(99, 102, 241, 0.4) !important;
+}
+
+#mindshield-counter-pill.pulse {
+  animation: msPillPulse 0.4s ease-out !important;
+}
+
+@keyframes msPillPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+#mindshield-counter-pill .ms-pill-badge {
+  background: #4f46e5 !important;
+  color: white !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 2px 8px !important;
+  border-radius: 9999px !important;
+}
+
+#mindshield-counter-pill.warning .ms-pill-badge {
+  background: #f59e0b !important;
+}
+
+#mindshield-counter-pill.danger .ms-pill-badge {
+  background: #ef4444 !important;
+}
+
+

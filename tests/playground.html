@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MindShield Test Playground: Simulated Reels</title>
+  <link rel="stylesheet" href="../src/content/overlay.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background: #030712;
+      color: #f9fafb;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Sidebar controls */
+    .controls-panel {
+      width: 380px;
+      background: #0f172a;
+      border-right: 1px solid #1e293b;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      z-index: 10;
+      overflow-y: auto;
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #818cf8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: #1e293b;
+      color: #38bdf8;
+      font-weight: 600;
+    }
+
+    .panel-card {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .stat-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .stat-val {
+      font-weight: 700;
+      color: #38bdf8;
+    }
+
+    .btn-action {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      width: 100%;
+      margin-top: 6px;
+    }
+
+    .btn-action:hover {
+      background: #4338ca;
+    }
+
+    .btn-danger {
+      background: #dc2626;
+    }
+
+    .btn-danger:hover {
+      background: #b91c1c;
+    }
+
+    .btn-secondary {
+      background: #334155;
+    }
+
+    .btn-secondary:hover {
+      background: #475569;
+    }
+
+    /* Reels Feed Simulator */
+    .reels-viewport {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000000;
+      position: relative;
+    }
+
+    .reels-container {
+      width: 420px;
+      height: 92vh;
+      border-radius: 20px;
+      background: #111827;
+      border: 2px solid #1f2937;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      scrollbar-width: none;
+      position: relative;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9);
+    }
+
+    .reels-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .reel-item {
+      width: 100%;
+      height: 100%;
+      scroll-snap-align: start;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 24px;
+      box-sizing: border-box;
+      background-size: cover;
+      background-position: center;
+      border-bottom: 2px solid #000;
+    }
+
+    .reel-overlay-info {
+      background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .reel-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .reel-creator {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .reel-caption {
+      font-size: 13px;
+      color: #e5e7eb;
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    .reel-audio {
+      font-size: 12px;
+      color: #9ca3af;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .video-mock {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+      filter: brightness(0.7);
+    }
+
+    .reel-side-actions {
+      position: absolute;
+      right: 16px;
+      bottom: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      z-index: 3;
+    }
+
+    .action-bubble {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .action-count {
+      font-size: 11px;
+      color: #e5e7eb;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar Controller -->
+  <aside class="controls-panel">
+    <div class="panel-title">
+      <span>🛡️ MindShield Playground</span>
+      <span class="badge">Simulated Feed</span>
+    </div>
+
+    <div class="panel-card">
+      <div class="stat-row">
+        <span>Session Reels Watched:</span>
+        <span class="stat-val" id="disp-session-reels">0</span>
+      </div>
+      <div class="stat-row">
+        <span>Reel Limit:</span>
+        <span class="stat-val" id="disp-limit">3 reels</span>
+      </div>
+      <div class="stat-row">
+        <span>Cooldown Duration:</span>
+        <span class="stat-val">30 mins</span>
+      </div>
+      <div class="stat-row">
+        <span>Prefrontal Status:</span>
+        <span class="stat-val" id="disp-status" style="color: #34d399;">Active</span>
+      </div>
+    </div>
+
+    <div class="panel-card">
+      <h4 style="font-size: 13px; margin-bottom: 8px; color: #cbd5e1;">Test Triggers</h4>
+      <button class="btn-action" id="btn-next-reel">⬇️ Scroll to Next Reel</button>
+      <button class="btn-action btn-secondary" id="btn-trigger-puzzle">🧩 Force Trigger Challenge</button>
+      <button class="btn-action btn-danger" id="btn-trigger-cooldown">🛑 Force 30m Cooldown</button>
+      <button class="btn-action btn-secondary" id="btn-reset">🔄 Reset Test State</button>
+    </div>
+
+    <div style="font-size: 12px; color: #94a3b8; line-height: 1.5;">
+      <strong>How to test:</strong>
+      <ol style="padding-left: 18px; margin-top: 6px;">
+        <li>Scroll down the mock phone feed with mouse wheel or arrow keys.</li>
+        <li>After 3 reels, the anti-ADHD Lock Overlay triggers!</li>
+        <li>Try to scroll or close it: scrolling is locked.</li>
+        <li>Solve the math or Stroop test to unlock, or fail 3 times to enter the 30-min Cooldown lock.</li>
+      </ol>
+    </div>
+  </aside>
+
+  <!-- Phone Screen Simulator -->
+  <main class="reels-viewport">
+    <div class="reels-container" id="feed-container">
+      <!-- Reel 1 -->
+      <section class="reel-item" id="reel-1" style="background: linear-gradient(135deg, #1e1b4b, #312e81);">
+        <div class="reel-overlay-info"></div>
+        <div class="reel-content">
+          <div class="reel-creator">@tech_mind • Follow</div>
+          <div class="reel-caption">10 Coding Tricks That Will Save You 100 Hours 🚀 #coding #developer #react</div>
+          <div class="reel-audio">🎵 Original Sound - Lo-Fi Chill Beats</div>
+        </div>
+        <div class="reel-side-actions">
+          <div class="action-bubble">❤️<span class="action-count">142K</span></div>
+          <div class="action-bubble">💬<span class="action-count">1,248</span></div>
+          <div class="action-bubble">↗️<span class="action-count">Share</span></div>
+        </div>
+      </section>
+
+      <!-- Reel 2 -->
+      <section class="reel-item" id="reel-2" style="background: linear-gradient(135deg, #3730a3, #4c1d95);">
+        <div class="reel-overlay-info"></div>
+        <div class="reel-content">
+          <div class="reel-creator">@life_growth • Follow</div>
+          <div class="reel-caption">Why dopamine loops destroy your concentration and how to stop. 🧠</div>
+          <div class="reel-audio">🎵 Focus Ambient Flow</div>
+        </div>
+        <div class="reel-side-actions">
+          <div class="action-bubble">❤️<span class="action-count">89K</span></div>
+          <div class="action-bubble">💬<span class="action-count">912</span></div>
+          <div class="action-bubble">↗️<span class="action-count">Share</span></div>
+        </div>
+      </section>
+
+      <!-- Reel 3 -->
+      <section class="reel-item" id="reel-3" style="background: linear-gradient(135deg, #581c87, #701a75);">
+        <div class="reel-overlay-info"></div>
+        <div class="reel-content">
+          <div class="reel-creator">@quick_recipes • Follow</div>
+          <div class="reel-caption">5-Minute Crispy Garlic Noodles recipe you need to try tonight 🍜</div>
+          <div class="reel-audio">🎵 Upbeat Cooking Track</div>
+        </div>
+        <div class="reel-side-actions">
+          <div class="action-bubble">❤️<span class="action-count">310K</span></div>
+          <div class="action-bubble">💬<span class="action-count">3,401</span></div>
+          <div class="action-bubble">↗️<span class="action-count">Share</span></div>
+        </div>
+      </section>
+
+      <!-- Reel 4 -->
+      <section class="reel-item" id="reel-4" style="background: linear-gradient(135deg, #831843, #881337);">
+        <div class="reel-overlay-info"></div>
+        <div class="reel-content">
+          <div class="reel-creator">@daily_memes • Follow</div>
+          <div class="reel-caption">When you sit down to work for 5 minutes and scroll reels for 2 hours 😂</div>
+          <div class="reel-audio">🎵 Funny Laugh Track</div>
+        </div>
+        <div class="reel-side-actions">
+          <div class="action-bubble">❤️<span class="action-count">512K</span></div>
+          <div class="action-bubble">💬<span class="action-count">6,812</span></div>
+          <div class="action-bubble">↗️<span class="action-count">Share</span></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Interactive Test Controller Script -->
+  <script type="module">
+    import { generateChallenge, verifyAnswer } from '../src/core/challenge-engine.js';
+    import { StateManager } from '../src/core/state-manager.js';
+    import { OverlayManager } from '../src/content/overlay.js';
+
+    const overlay = new OverlayManager();
+    const stateManager = new StateManager(null, {
+      reelLimit: 3,
+      timeLimitMinutes: 10,
+      cooldownMinutes: 30,
+      maxFailedAttempts: 3
+    });
+
+    let currentReelIndex = 0;
+    const reels = document.querySelectorAll('.reel-item');
+    const container = document.getElementById('feed-container');
+
+    const dispSessionReels = document.getElementById('disp-session-reels');
+    const dispStatus = document.getElementById('disp-status');
+
+    function updateUI(reelsCount, isBlocked, isCooldown) {
+      dispSessionReels.textContent = reelsCount;
+      if (isCooldown) {
+        dispStatus.textContent = '🛑 Cooldown Lock';
+        dispStatus.style.color = '#ef4444';
+      } else if (isBlocked) {
+        dispStatus.textContent = '🔒 Blocked (Solve Puzzle)';
+        dispStatus.style.color = '#f59e0b';
+      } else {
+        dispStatus.textContent = 'Active Guarding';
+        dispStatus.style.color = '#34d399';
+      }
+    }
+
+    async function checkAndTriggerBlock() {
+      const state = await stateManager.getState();
+      const cooldown = await stateManager.checkCooldownStatus();
+
+      if (cooldown.isCooldown) {
+        updateUI(state.reelCount, true, true);
+        overlay.showCooldown(cooldown.remainingSeconds, () => {
+          overlay.removeOverlay();
+          updateUI(0, false, false);
+        });
+        return;
+      }
+
+      if (state.isBlocked) {
+        updateUI(state.reelCount, true, false);
+        triggerChallenge();
+      } else {
+        updateUI(state.reelCount, false, false);
+      }
+    }
+
+    function triggerChallenge() {
+      const challenge = generateChallenge('random', 'medium');
+      let attempts = 0;
+
+      overlay.showChallenge({
+        challenge,
+        currentAttempts: attempts,
+        maxAttempts: 3,
+        onSubmit: async (ans) => {
+          const isCorrect = verifyAnswer(challenge, ans);
+          const res = await stateManager.recordChallengeAttempt(isCorrect);
+
+          if (res.unlocked) {
+            overlay.celebrateAndClose(() => {
+              updateUI(0, false, false);
+            });
+          } else if (res.cooldownTriggered) {
+            updateUI(0, true, true);
+            overlay.showCooldown(1800, () => {
+              overlay.removeOverlay();
+              updateUI(0, false, false);
+            });
+          } else {
+            attempts = res.failedAttempts;
+            overlay.showErrorFeedback('Incorrect answer! Prefrontal focus required.', 3 - attempts);
+          }
+        },
+        onGiveUp: async () => {
+          await stateManager.startCooldown(30);
+          updateUI(0, true, true);
+          overlay.showCooldown(1800, () => {
+            overlay.removeOverlay();
+            updateUI(0, false, false);
+          });
+        }
+      });
+    }
+
+    // Scroll observation
+    let lastScrollReel = 0;
+    container.addEventListener('scroll', async () => {
+      const index = Math.round(container.scrollTop / container.clientHeight);
+      if (index !== lastScrollReel) {
+        lastScrollReel = index;
+        const res = await stateManager.recordReelView();
+        updateUI(res.reelCount, res.shouldBlock, res.isCooldown);
+        if (res.shouldBlock || res.isCooldown) {
+          checkAndTriggerBlock();
+        }
+      }
+    });
+
+    // Control buttons
+    document.getElementById('btn-next-reel').addEventListener('click', async () => {
+      currentReelIndex = (currentReelIndex + 1) % reels.length;
+      reels[currentReelIndex].scrollIntoView({ behavior: 'smooth' });
+    });
+
+    document.getElementById('btn-trigger-puzzle').addEventListener('click', () => {
+      triggerChallenge();
+    });
+
+    document.getElementById('btn-trigger-cooldown').addEventListener('click', async () => {
+      await stateManager.startCooldown(30);
+      checkAndTriggerBlock();
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', async () => {
+      await stateManager.resetSession();
+      overlay.removeOverlay();
+      updateUI(0, false, false);
+    });
+  </script>
+</body>
+</html>

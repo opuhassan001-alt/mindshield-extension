@@ -1,0 +1,384 @@
+/**
+ * MindShield Overlay Manager
+ * Inescapable full-screen interruption modal with rich audio cues,
+ * science-backed ADHD focus soundscapes, and particle celebrations.
+ */
+
+import {
+  playWarningBell,
+  playSuccessFanfare,
+  playErrorBuzz,
+  launchCelebration,
+  getMuted,
+  setMuted
+} from '../core/sound-effects.js';
+
+import {
+  startSoundscape,
+  stopSoundscape,
+  isPlaying,
+  getTrackInfo
+} from '../core/focus-soundscapes.js';
+
+export class OverlayManager {
+  constructor() {
+    this.root = null;
+    this.cooldownInterval = null;
+    this.isScrollTrapped = false;
+    this._handleKeyDown = this._handleKeyDown.bind(this);
+    this._handleWheel = this._handleWheel.bind(this);
+    this._handleTouch = this._handleTouch.bind(this);
+  }
+
+  trapScroll() {
+    if (this.isScrollTrapped) return;
+    this.isScrollTrapped = true;
+
+    document.documentElement.style.setProperty('overflow', 'hidden', 'important');
+    document.body?.style.setProperty('overflow', 'hidden', 'important');
+
+    window.addEventListener('wheel', this._handleWheel, { passive: false, capture: true });
+    window.addEventListener('touchmove', this._handleTouch, { passive: false, capture: true });
+    window.addEventListener('keydown', this._handleKeyDown, { passive: false, capture: true });
+  }
+
+  releaseScroll() {
+    if (!this.isScrollTrapped) return;
+    this.isScrollTrapped = false;
+
+    document.documentElement.style.removeProperty('overflow');
+    document.body?.style.removeProperty('overflow');
+
+    window.removeEventListener('wheel', this._handleWheel, { capture: true });
+    window.removeEventListener('touchmove', this._handleTouch, { capture: true });
+    window.removeEventListener('keydown', this._handleKeyDown, { capture: true });
+  }
+
+  _handleWheel(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  _handleTouch(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  _handleKeyDown(e) {
+    const blockedKeys = ['Space', 'ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End'];
+    if (blockedKeys.includes(e.code) && e.target.tagName !== 'INPUT') {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }
+
+  getOrCreateRoot() {
+    if (!this.root || !document.body.contains(this.root)) {
+      this.root = document.createElement('div');
+      this.root.id = 'mindshield-overlay-root';
+      document.body.appendChild(this.root);
+    }
+    return this.root;
+  }
+
+  removeOverlay() {
+    stopSoundscape();
+    if (this.cooldownInterval) {
+      clearInterval(this.cooldownInterval);
+      this.cooldownInterval = null;
+    }
+    if (this.root && this.root.parentNode) {
+      this.root.parentNode.removeChild(this.root);
+    }
+    this.root = null;
+    this.releaseScroll();
+  }
+
+  /**
+   * Celebrate puzzle completion with fanfare and confetti before closing
+   */
+  celebrateAndClose(callback) {
+    const root = this.getOrCreateRoot();
+    const container = root.querySelector('.ms-container');
+    if (container) {
+      container.classList.add('unlocked');
+      launchCelebration(container);
+    }
+    playSuccessFanfare();
+
+    setTimeout(() => {
+      this.removeOverlay();
+      if (callback) callback();
+    }, 700);
+  }
+
+  /**
+   * Render Brain Puzzle / Challenge
+   */
+  showChallenge({
+    challenge,
+    currentAttempts = 0,
+    maxAttempts = 3,
+    reason = 'limit',
+    onSubmit,
+    onGiveUp
+  }) {
+    this.trapScroll();
+    const root = this.getOrCreateRoot();
+
+    let subtitle = reason === 'time_limit' 
+      ? 'You have reached your active watching time limit. Engage your mind to unlock.'
+      : 'You have reached your reel scroll limit. Wake up your prefrontal cortex!';
+
+    let inputHtml = '';
+    if (challenge.inputType === 'choice') {
+      inputHtml = `
+        <div class="ms-choices-grid">
+          ${challenge.options.map(opt => `
+            <button class="ms-choice-btn" data-val="${opt}">${opt}</button>
+          `).join('')}
+        </div>
+      `;
+    } else {
+      inputHtml = `
+        <div class="ms-input-group">
+          <input type="text" class="ms-input" id="ms-answer-input" placeholder="Type your answer..." autocomplete="off" />
+          <button class="ms-btn" id="ms-submit-btn">Unlock</button>
+        </div>
+      `;
+    }
+
+    let challengeContent = '';
+    if (challenge.type === 'stroop') {
+      challengeContent = `
+        <div class="ms-subtitle">${challenge.instruction}</div>
+        <div class="ms-stroop-word" style="color: ${challenge.inkColor};">${challenge.word}</div>
+      `;
+    } else {
+      challengeContent = `
+        <div class="ms-subtitle">${challenge.instruction}</div>
+        <div class="ms-challenge-question">${challenge.question}</div>
+      `;
+    }
+
+    const soundIcon = getMuted() ? '🔇' : '🔊';
+
+    root.innerHTML = `
+      <div class="ms-container">
+        <button class="ms-sound-toggle" id="ms-sound-toggle" title="Toggle Sound">${soundIcon}</button>
+        <div class="ms-badge-header">⚡ ADHD Mind Interruption</div>
+        <h2 class="ms-title">${challenge.title}</h2>
+        <div class="ms-subtitle">${subtitle}</div>
+
+        <div class="ms-card">
+          ${challengeContent}
+          ${inputHtml}
+          <div class="ms-feedback" id="ms-feedback">
+            ${currentAttempts > 0 ? `Attempts: ${currentAttempts}/${maxAttempts}` : ''}
+          </div>
+        </div>
+
+        <button class="ms-btn ms-btn-secondary" id="ms-giveup-btn">
+          I want a break (Start 30-min Detox Cooldown)
+        </button>
+      </div>
+    `;
+
+    playWarningBell();
+
+    const feedbackEl = root.querySelector('#ms-feedback');
+    const inputEl = root.querySelector('#ms-answer-input');
+    const submitBtn = root.querySelector('#ms-submit-btn');
+    const giveUpBtn = root.querySelector('#ms-giveup-btn');
+    const choiceBtns = root.querySelectorAll('.ms-choice-btn');
+    const soundToggleBtn = root.querySelector('#ms-sound-toggle');
+
+    if (soundToggleBtn) {
+      soundToggleBtn.addEventListener('click', () => {
+        const nextMuted = !getMuted();
+        setMuted(nextMuted);
+        soundToggleBtn.textContent = nextMuted ? '🔇' : '🔊';
+      });
+    }
+
+    if (inputEl) {
+      inputEl.focus();
+      inputEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          this._submitAnswer(inputEl.value, onSubmit, feedbackEl);
+        }
+      });
+    }
+
+    if (submitBtn) {
+      submitBtn.addEventListener('click', () => {
+        this._submitAnswer(inputEl.value, onSubmit, feedbackEl);
+      });
+    }
+
+    choiceBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const val = btn.getAttribute('data-val');
+        this._submitAnswer(val, onSubmit, feedbackEl);
+      });
+    });
+
+    if (giveUpBtn) {
+      giveUpBtn.addEventListener('click', () => {
+        if (onGiveUp) onGiveUp();
+      });
+    }
+  }
+
+  _submitAnswer(answer, onSubmit, feedbackEl) {
+    if (!answer || answer.trim() === '') {
+      if (feedbackEl) {
+        feedbackEl.className = 'ms-feedback error';
+        feedbackEl.textContent = 'Please enter an answer first!';
+        playErrorBuzz();
+      }
+      return;
+    }
+
+    if (onSubmit) {
+      onSubmit(answer);
+    }
+  }
+
+  showErrorFeedback(message, remainingAttempts) {
+    const root = this.getOrCreateRoot();
+    const feedbackEl = root.querySelector('#ms-feedback');
+    if (feedbackEl) {
+      feedbackEl.className = 'ms-feedback error';
+      feedbackEl.textContent = `${message} (${remainingAttempts} attempts left)`;
+      playErrorBuzz();
+    }
+  }
+
+  /**
+   * Render Cooldown Screen with Science-backed ADHD Soundscapes
+   */
+  showCooldown(remainingSeconds, onComplete) {
+    this.trapScroll();
+    if (this.cooldownInterval) {
+      clearInterval(this.cooldownInterval);
+    }
+
+    const root = this.getOrCreateRoot();
+    let timeLeft = remainingSeconds;
+
+    const formatTime = (secs) => {
+      const m = Math.floor(secs / 60);
+      const s = secs % 60;
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    };
+
+    const soundIcon = getMuted() ? '🔇' : '🔊';
+
+    root.innerHTML = `
+      <div class="ms-container">
+        <button class="ms-sound-toggle" id="ms-sound-toggle" title="Toggle Sound">${soundIcon}</button>
+        <div class="ms-badge-header cooldown">🛑 Dopamine Detox Active</div>
+        <h2 class="ms-title">MindShield Cooldown Lock</h2>
+        <div class="ms-subtitle">
+          Too many missed challenges or detox session started. Step away from short-form videos to restore dopamine sensitivity.
+        </div>
+
+        <div class="ms-card">
+          <div class="ms-cooldown-timer" id="ms-timer-val">${formatTime(timeLeft)}</div>
+          <div class="ms-breath-circle">Breathe</div>
+          <p style="margin: 0; font-size: 13px; color: #cbd5e1;">
+            Reels will unlock automatically when timer expires.
+          </p>
+
+          <!-- Neuro-Focus Audio Player -->
+          <div class="ms-focus-soundscape-box">
+            <div class="ms-soundscape-header">
+              <span>🎧 ADHD Focus Audio (Science-Backed)</span>
+              <span class="ms-soundscape-badge" id="ms-soundscape-status">Stopped</span>
+            </div>
+            <div class="ms-soundscape-controls">
+              <select id="ms-soundscape-select" class="ms-soundscape-select">
+                <option value="brown">🌊 Deep Brown Noise (ADHD Stochastic Resonance)</option>
+                <option value="gamma40">⚡ 40 Hz Gamma Focus Wave (MIT Research)</option>
+                <option value="alpha">🧠 10 Hz Alpha Flow State (Calm Alertness)</option>
+                <option value="beta">🎯 16 Hz Beta Analytical (Active Thinking)</option>
+                <option value="pink">🌧️ Rainfall Pink Noise (Sustained Focus)</option>
+              </select>
+              <button type="button" id="ms-soundscape-toggle" class="ms-soundscape-btn">▶ Play</button>
+            </div>
+            <div class="ms-soundscape-desc" id="ms-soundscape-desc">
+              Brown noise raises background neural stochastic resonance to calm dopamine-starved ADHD brains.
+            </div>
+          </div>
+        </div>
+
+        <div class="ms-quote">
+          "The ability to delay gratification is the ultimate superpower in the age of algorithms."
+        </div>
+      </div>
+    `;
+
+    playWarningBell();
+
+    const timerVal = root.querySelector('#ms-timer-val');
+    const soundToggleBtn = root.querySelector('#ms-sound-toggle');
+    const soundscapeSelect = root.querySelector('#ms-soundscape-select');
+    const soundscapeToggleBtn = root.querySelector('#ms-soundscape-toggle');
+    const soundscapeDesc = root.querySelector('#ms-soundscape-desc');
+    const soundscapeStatus = root.querySelector('#ms-soundscape-status');
+
+    if (soundToggleBtn) {
+      soundToggleBtn.addEventListener('click', () => {
+        const nextMuted = !getMuted();
+        setMuted(nextMuted);
+        soundToggleBtn.textContent = nextMuted ? '🔇' : '🔊';
+      });
+    }
+
+    if (soundscapeSelect && soundscapeToggleBtn) {
+      soundscapeSelect.addEventListener('change', () => {
+        const info = getTrackInfo(soundscapeSelect.value);
+        if (soundscapeDesc) soundscapeDesc.textContent = info.adhdBenefit;
+        if (isPlaying()) {
+          startSoundscape(soundscapeSelect.value, 0.45);
+        }
+      });
+
+      soundscapeToggleBtn.addEventListener('click', () => {
+        if (isPlaying()) {
+          stopSoundscape();
+          soundscapeToggleBtn.textContent = '▶ Play';
+          soundscapeToggleBtn.classList.remove('playing');
+          if (soundscapeStatus) {
+            soundscapeStatus.textContent = 'Stopped';
+            soundscapeStatus.classList.remove('playing');
+          }
+        } else {
+          startSoundscape(soundscapeSelect.value, 0.45);
+          soundscapeToggleBtn.textContent = '⏹ Stop';
+          soundscapeToggleBtn.classList.add('playing');
+          if (soundscapeStatus) {
+            soundscapeStatus.textContent = 'Playing 🎧';
+            soundscapeStatus.classList.add('playing');
+          }
+        }
+      });
+    }
+
+    this.cooldownInterval = setInterval(() => {
+      timeLeft -= 1;
+      if (timeLeft <= 0) {
+        clearInterval(this.cooldownInterval);
+        this.cooldownInterval = null;
+        stopSoundscape();
+        if (timerVal) timerVal.textContent = '00:00';
+        playSuccessFanfare();
+        if (onComplete) onComplete();
+      } else {
+        if (timerVal) timerVal.textContent = formatTime(timeLeft);
+      }
+    }, 1000);
+  }
+}

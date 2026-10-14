@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MindShield Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="settings-container">
+    <header class="header">
+      <div class="logo-box">🛡️</div>
+      <div>
+        <h1 class="title">MindShield Preferences</h1>
+        <p class="subtitle">Customize dopamine guard limits, brain challenge types, and cooldown lockout.</p>
+      </div>
+    </header>
+
+    <form id="settings-form">
+      <!-- Section 1: Limits -->
+      <section class="section">
+        <h2 class="section-title">Interruption Triggers</h2>
+
+        <div class="field-row">
+          <div class="field-info">
+            <label for="reelLimit" class="field-label">Reel Count Limit</label>
+            <span class="field-desc">How many reels you can scroll before the brain puzzle blocks you.</span>
+          </div>
+          <div class="field-control">
+            <input type="number" id="reelLimit" min="1" max="50" class="input-number" />
+            <span class="unit">reels</span>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-info">
+            <label for="timeLimitMinutes" class="field-label">Session Time Limit</label>
+            <span class="field-desc">Maximum minutes spent watching reels before triggering an interruption.</span>
+          </div>
+          <div class="field-control">
+            <input type="number" id="timeLimitMinutes" min="1" max="120" class="input-number" />
+            <span class="unit">minutes</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2: Cooldown Lockout -->
+      <section class="section">
+        <h2 class="section-title">Detox Cooldown Lockout</h2>
+
+        <div class="field-row">
+          <div class="field-info">
+            <label for="cooldownMinutes" class="field-label">Cooldown Duration</label>
+            <span class="field-desc">Minutes to lock out reels if you fail the puzzle 3 times or choose to take a break.</span>
+          </div>
+          <div class="field-control">
+            <input type="number" id="cooldownMinutes" min="5" max="180" class="input-number" />
+            <span class="unit">minutes</span>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-info">
+            <label for="maxFailedAttempts" class="field-label">Allowed Puzzle Attempts</label>
+            <span class="field-desc">Wrong answers allowed before the mandatory cooldown lockout engages.</span>
+          </div>
+          <div class="field-control">
+            <input type="number" id="maxFailedAttempts" min="1" max="5" class="input-number" />
+            <span class="unit">attempts</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: Brain Challenges -->
+      <section class="section">
+        <h2 class="section-title">Cognitive Challenges</h2>
+
+        <div class="field-row">
+          <div class="field-info">
+            <label for="challengeType" class="field-label">Puzzle Variety</label>
+            <span class="field-desc">Type of cognitive task to break mindless scrolling.</span>
+          </div>
+          <div class="field-control">
+            <select id="challengeType" class="select">
+              <option value="random">Random Mix (Recommended)</option>
+              <option value="math">Mental Arithmetic</option>
+              <option value="sequence">Pattern Recognition</option>
+              <option value="stroop">Stroop Reflex Conflict</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-info">
+            <label for="difficulty" class="field-label">Difficulty</label>
+            <span class="field-desc">Higher difficulties demand greater prefrontal cortex activation.</span>
+          </div>
+          <div class="field-control">
+            <select id="difficulty" class="select">
+              <option value="easy">Easy (Warm-up)</option>
+              <option value="medium">Medium (Standard)</option>
+              <option value="hard">Hard (Demanding)</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 4: Platforms -->
+      <section class="section">
+        <h2 class="section-title">Monitored Platforms</h2>
+
+        <div class="checkbox-grid">
+          <label class="checkbox-label">
+            <input type="checkbox" id="plat-instagram" />
+            <span>Instagram Reels</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="plat-youtube" />
+            <span>YouTube Shorts</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="plat-facebook" />
+            <span>Facebook Reels</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="plat-tiktok" />
+            <span>TikTok</span>
+          </label>
+        </div>
+      </section>
+
+      <div class="footer-bar">
+        <button type="submit" class="save-btn" id="save-btn">Save Preferences</button>
+        <span class="save-msg" id="save-msg"></span>
+      </div>
+    </form>
+  </div>
+
+  <script src="options.js" type="module"></script>
+</body>
+</html>

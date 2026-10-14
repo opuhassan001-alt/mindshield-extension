@@ -1,0 +1,13 @@
+{
+  "name": "mindshield-extension",
+  "version": "1.0.0",
+  "description": "MindShield: ADHD Reels & Shorts Blocker Chrome Extension",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "keywords": ["adhd", "reels-blocker", "chrome-extension", "focus"],
+  "author": "",
+  "license": "MIT"
+}

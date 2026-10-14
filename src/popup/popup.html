@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MindShield</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-wrapper">
+    <header class="header">
+      <div class="logo-group">
+        <span class="icon">🛡️</span>
+        <div>
+          <h1 class="brand-title">MindShield</h1>
+          <span class="status-indicator active">Guarding Focus</span>
+        </div>
+      </div>
+      <a href="../options/options.html" target="_blank" class="settings-btn" title="Settings">⚙️</a>
+    </header>
+
+    <!-- Session Progress -->
+    <div class="card session-card">
+      <div class="card-header">
+        <span class="card-label">Current Session</span>
+        <span class="session-ratio" id="session-ratio">0 / 5</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progress-fill" style="width: 0%;"></div>
+      </div>
+      <div class="card-footer-text" id="session-status-text">5 reels remaining before challenge</div>
+    </div>
+
+    <!-- Cooldown Status (hidden by default) -->
+    <div class="card cooldown-card hidden" id="cooldown-card">
+      <div class="cooldown-badge">🛑 Cooldown Lockout</div>
+      <div class="cooldown-time" id="cooldown-time">30:00</div>
+      <div class="cooldown-sub">Dopamine reset in progress</div>
+    </div>
+
+    <!-- Daily Stats -->
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-num" id="stat-reels-today">0</div>
+        <div class="stat-title">Reels Today</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-challenges-today">0</div>
+        <div class="stat-title">Brain Puzzles Solved</div>
+      </div>
+    </div>
+
+    <!-- Neuro-Focus Audio Card -->
+    <div class="card focus-audio-card">
+      <div class="card-header">
+        <span class="card-label">🎧 ADHD Focus Audio</span>
+        <span class="audio-badge" id="popup-audio-badge">Off</span>
+      </div>
+      <div class="audio-controls-row">
+        <select id="popup-soundscape-select" class="popup-audio-select">
+          <option value="brown">🌊 Brown Noise</option>
+          <option value="gamma40">⚡ 40 Hz Gamma Wave</option>
+          <option value="alpha">🧠 10 Hz Alpha Wave</option>
+          <option value="beta">🎯 16 Hz Beta Wave</option>
+          <option value="pink">🌧️ Pink Rain Noise</option>
+        </select>
+        <button type="button" id="popup-audio-toggle-btn" class="btn btn-audio-play">▶ Play</button>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="action-buttons">
+      <button class="btn btn-secondary" id="btn-manual-break">Take 30m Mind Break</button>
+      <button class="btn btn-outline" id="btn-reset-session">Reset Count</button>
+    </div>
+  </div>
+
+  <script src="popup.js" type="module"></script>
+</body>
+</html>

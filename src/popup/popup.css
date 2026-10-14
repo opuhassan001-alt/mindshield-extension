@@ -1,0 +1,269 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+  width: 330px;
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.popup-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-group .icon {
+  font-size: 24px;
+}
+
+.brand-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.status-indicator {
+  font-size: 11px;
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-indicator::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #10b981;
+  border-radius: 50%;
+}
+
+.settings-btn {
+  text-decoration: none;
+  font-size: 18px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.settings-btn:hover {
+  background: #1e293b;
+}
+
+.card {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.card-label {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.session-ratio {
+  color: #818cf8;
+  font-weight: 700;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: #0f172a;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #a855f7);
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.card-footer-text {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.cooldown-card {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  text-align: center;
+}
+
+.cooldown-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #f87171;
+  text-transform: uppercase;
+}
+
+.cooldown-time {
+  font-size: 28px;
+  font-weight: 800;
+  color: #ef4444;
+  margin: 4px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.cooldown-sub {
+  font-size: 11px;
+  color: #fca5a5;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.stat-box {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+}
+
+.stat-num {
+  font-size: 20px;
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.stat-title {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-secondary {
+  background: #334155;
+  color: #f8fafc;
+}
+
+.btn-secondary:hover {
+  background: #475569;
+}
+
+.btn-outline {
+  background: transparent;
+  color: #94a3b8;
+  border: 1px solid #334155;
+}
+
+.btn-outline:hover {
+  border-color: #64748b;
+  color: #f8fafc;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Focus Audio Card in Popup */
+.focus-audio-card {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+.audio-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.audio-badge.playing {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.audio-controls-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.popup-audio-select {
+  flex: 1;
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: #f8fafc;
+  font-size: 11px;
+  border-radius: 6px;
+  padding: 6px 8px;
+  outline: none;
+  cursor: pointer;
+}
+
+.btn-audio-play {
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 0 0 auto;
+}
+
+.btn-audio-play:hover {
+  background: #4338ca;
+}
+
+.btn-audio-play.playing {
+  background: #dc2626;
+}
+
