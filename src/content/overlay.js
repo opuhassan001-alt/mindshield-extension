@@ -90,6 +90,8 @@ export class OverlayManager {
     if (this.root && this.root.parentNode) {
       this.root.parentNode.removeChild(this.root);
     }
+    this.currentOverlayType = null;
+    this.currentChallengeId = null;
     this.root = null;
     this.releaseScroll();
   }
@@ -123,6 +125,12 @@ export class OverlayManager {
     onSubmit,
     onGiveUp
   }) {
+    if (this.currentOverlayType === 'challenge' && this.currentChallengeId === challenge.id) {
+      return;
+    }
+    this.currentOverlayType = 'challenge';
+    this.currentChallengeId = challenge.id;
+
     this.trapScroll();
     const root = this.getOrCreateRoot();
 
@@ -188,8 +196,6 @@ export class OverlayManager {
         </button>
       </div>
     `;
-
-    playWarningBell();
 
     const feedbackEl = root.querySelector('#ms-feedback');
     const inputEl = root.querySelector('#ms-answer-input');
@@ -265,6 +271,12 @@ export class OverlayManager {
    * Render Cooldown Screen with Science-backed ADHD Soundscapes
    */
   showCooldown(remainingSeconds, onComplete, solutionInfo = null) {
+    if (this.currentOverlayType === 'cooldown') {
+      return;
+    }
+    this.currentOverlayType = 'cooldown';
+    this.currentChallengeId = null;
+
     this.trapScroll();
     if (this.cooldownInterval) {
       clearInterval(this.cooldownInterval);
@@ -353,8 +365,6 @@ export class OverlayManager {
         </div>
       </div>
     `;
-
-    playWarningBell();
 
     const timerVal = root.querySelector('#ms-timer-val');
     const soundToggleBtn = root.querySelector('#ms-sound-toggle');

@@ -25,34 +25,8 @@ function getAudioContext() {
  * Used when the screen locks to gently interrupt the dopamine trance
  */
 export function playWarningBell() {
-  if (isMuted) return;
-  try {
-    const ctx = getAudioContext();
-    if (!ctx) return;
-
-    // Harmonic bell tones (528Hz base - Solfeggio focus frequency)
-    const freqs = [528, 1056, 1584];
-    freqs.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.type = i === 0 ? 'sine' : 'triangle';
-      osc.frequency.setValueAtTime(freq, ctx.currentTime);
-
-      const vol = 0.12 / (i + 1);
-      gain.gain.setValueAtTime(0, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + 0.04);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2 + (i * 0.2));
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 1.5);
-    });
-  } catch (e) {
-    // Audio context may be blocked by autoplay policies
-  }
+  // Turned off by user request: "ting ting ting ting" sound disabled
+  return;
 }
 
 /**

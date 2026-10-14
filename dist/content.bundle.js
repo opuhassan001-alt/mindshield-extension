@@ -97,26 +97,8 @@
   }
 
   function playWarningBell() {
-    if (isMuted) return;
-    try {
-      const ctx = getAudioContext();
-      if (!ctx) return;
-      const freqs = [528, 1056, 1584];
-      freqs.forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = i === 0 ? 'sine' : 'triangle';
-        osc.frequency.setValueAtTime(freq, ctx.currentTime);
-        const vol = 0.12 / (i + 1);
-        gain.gain.setValueAtTime(0, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + 0.04);
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2 + (i * 0.2));
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 1.5);
-      });
-    } catch (_) {}
+    // Turned off by user request: "ting ting ting ting" sound disabled
+    return;
   }
 
   function playSuccessFanfare() {
@@ -360,6 +342,8 @@
       this.root = null;
       this.cooldownInterval = null;
       this.isScrollTrapped = false;
+      this.currentOverlayType = null;
+      this.currentChallengeId = null;
       this._handleKeyDown = this._handleKeyDown.bind(this);
       this._handleWheel = this._handleWheel.bind(this);
       this._handleTouch = this._handleTouch.bind(this);
@@ -425,6 +409,8 @@
       if (this.root && this.root.parentNode) {
         this.root.parentNode.removeChild(this.root);
       }
+      this.currentOverlayType = null;
+      this.currentChallengeId = null;
       this.root = null;
       this.releaseScroll();
     }
@@ -444,6 +430,12 @@
     }
 
     showChallenge({ challenge, currentAttempts = 0, maxAttempts = 3, reason = 'limit', onSubmit, onGiveUp }) {
+      if (this.currentOverlayType === 'challenge' && this.currentChallengeId === challenge.id) {
+        return;
+      }
+      this.currentOverlayType = 'challenge';
+      this.currentChallengeId = challenge.id;
+
       this.trapScroll();
       const root = this.getOrCreateRoot();
 
@@ -491,8 +483,6 @@
         '  <button class="ms-btn ms-btn-secondary" id="ms-giveup-btn">I want a break (Start 30-min Detox Cooldown)</button>',
         '</div>'
       ].join('');
-
-      playWarningBell();
 
       const feedbackEl = root.querySelector('#ms-feedback');
       const inputEl = root.querySelector('#ms-answer-input');
@@ -561,6 +551,12 @@
     }
 
     showCooldown(remainingSeconds, onComplete, solutionInfo = null) {
+      if (this.currentOverlayType === 'cooldown') {
+        return;
+      }
+      this.currentOverlayType = 'cooldown';
+      this.currentChallengeId = null;
+
       this.trapScroll();
       if (this.cooldownInterval) clearInterval(this.cooldownInterval);
 
@@ -633,8 +629,6 @@
         '  <div class="ms-quote">"The ability to delay gratification is the ultimate superpower in the age of algorithms."</div>',
         '</div>'
       ].join('');
-
-      playWarningBell();
 
       const timerVal = root.querySelector('#ms-timer-val');
       const soundToggleBtn = root.querySelector('#ms-sound-toggle');
