@@ -137,6 +137,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
       case 'GET_POPUP_DATA': {
         const cooldown = await stateManager.checkCooldownStatus();
+        const sessionStatus = await stateManager.checkSessionStatus();
         const stats = await stateManager.getStats();
         const lastFailedChallenge = await stateManager.getLastFailedChallenge();
         return sendResponse({
@@ -145,6 +146,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           stats,
           isCooldown: cooldown.isCooldown,
           remainingSeconds: cooldown.remainingSeconds,
+          elapsedMinutes: sessionStatus.elapsedMinutes || 0,
+          timeLimitMinutes: config.timeLimitMinutes || 15,
           lastFailedChallenge
         });
       }

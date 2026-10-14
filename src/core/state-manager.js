@@ -153,7 +153,8 @@ export class StateManager {
         isCooldown: false,
         reason: hitReelLimit ? 'reel_limit' : 'time_limit',
         reelCount: this.state.reelCount,
-        elapsedMinutes: Math.floor(elapsedMinutes)
+        elapsedMinutes: Math.floor(elapsedMinutes),
+        timeLimitMinutes: this.config.timeLimitMinutes || 15
       };
     }
 
@@ -161,7 +162,8 @@ export class StateManager {
       isBlocked: false,
       isCooldown: false,
       reelCount: this.state.reelCount,
-      elapsedMinutes: Math.floor(elapsedMinutes)
+      elapsedMinutes: Math.floor(elapsedMinutes),
+      timeLimitMinutes: this.config.timeLimitMinutes || 15
     };
   }
 
@@ -173,6 +175,8 @@ export class StateManager {
     if (cooldown.isCooldown) {
       return {
         reelCount: this.state.reelCount,
+        elapsedMinutes: 0,
+        timeLimitMinutes: this.config.timeLimitMinutes || 15,
         shouldBlock: true,
         isCooldown: true,
         remainingSeconds: cooldown.remainingSeconds
@@ -197,6 +201,8 @@ export class StateManager {
 
     return {
       reelCount: this.state.reelCount,
+      elapsedMinutes: Math.floor(elapsedMinutes),
+      timeLimitMinutes: this.config.timeLimitMinutes || 15,
       shouldBlock,
       isCooldown: false,
       reason: hitReelLimit ? 'reel_limit' : hitTimeLimit ? 'time_limit' : null
