@@ -4,6 +4,28 @@
 
 import { startSoundscape, stopSoundscape, isPlaying } from '../core/focus-soundscapes.js';
 import { getAngerMood } from '../core/anger-mood.js';
+import { checkForUpdates } from '../core/update-checker.js';
+
+async function checkVersion() {
+  const updateBadge = document.getElementById('popup-update-badge');
+  if (!updateBadge) return;
+
+  try {
+    const info = await checkForUpdates('1.0.2');
+    if (info && info.hasUpdate) {
+      updateBadge.textContent = `🚀 Update v${info.latestVersion}!`;
+      updateBadge.classList.add('has-update');
+      updateBadge.title = `A new version (v${info.latestVersion}) is available on GitHub! Click to download.`;
+      if (info.releaseUrl) updateBadge.href = info.releaseUrl;
+    } else {
+      updateBadge.textContent = 'Up to date ✓';
+      updateBadge.classList.remove('has-update');
+      updateBadge.title = 'You are running the latest version of MindShield.';
+    }
+  } catch (e) {
+    updateBadge.textContent = 'v1.0.2';
+  }
+}
 
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60);
@@ -147,4 +169,7 @@ if (audioToggleBtn && audioSelect) {
   });
 }
 
-document.addEventListener('DOMContentLoaded', loadData);
+document.addEventListener('DOMContentLoaded', () => {
+  loadData();
+  checkVersion();
+});
